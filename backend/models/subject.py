@@ -1,5 +1,5 @@
 # backend/models/subject.py
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from core.db import Base
 
@@ -9,6 +9,11 @@ class Subject(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False)
 
+    # теперь Subject «принадлежит» одной школе
+    school_id = Column(Integer, ForeignKey('schools.id'), nullable=False, index=True)
+    school = relationship('School', back_populates='subjects')
+
+    # связи с TeacherSubject, Grade, Schedule остаются прежними
     teachers = relationship('TeacherSubject', back_populates='subject')
     grades = relationship('Grade', back_populates='subject')
     schedules = relationship('Schedule', back_populates='subject')

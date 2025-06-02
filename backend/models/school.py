@@ -15,3 +15,4 @@ class School(Base):
     students = relationship('Student', back_populates='school')
     teachers = relationship('Teacher', back_populates='school')
     schedules = relationship('Schedule', back_populates='school')
+    subjects = relationship('Subject', back_populates='school', cascade='all, delete-orphan')
