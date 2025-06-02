@@ -1,0 +1,9 @@
+/* src/styles/variables.css */
+:root {
+    --color-primary: #4f46e5;
+    --color-secondary: #f59e0b;
+    --color-bg: #f3f4f6;
+    --color-text: #1f2937;
+    --font-base: 'Roboto', sans-serif;
+    --breakpoint-mobile: 768px;
+  }
