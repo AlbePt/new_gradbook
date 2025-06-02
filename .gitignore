@@ -1,6 +1,7 @@
 plan_detailed.docx
 docker-compose.yml
 Dockerfile
+tests/
 
 # ====================================
 # ОС и IDE
