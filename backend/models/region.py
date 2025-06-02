@@ -10,4 +10,4 @@ class Region(Base):
     name = Column(String(100), unique=True, nullable=False)
 
     # Отношения
-    cities = relationship('City', back_populates='region')
+    cities = relationship('City', back_populates='region', cascade='all, delete-orphan')

@@ -9,10 +9,12 @@ class Teacher(Base):
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
-    school_id = Column(Integer, ForeignKey('schools.id'), nullable=False)
+    subject_id = Column(Integer, ForeignKey('subjects.id', ondelete='RESTRICT'), nullable=False)
+    contact_info = Column(String(100), nullable=True)
+    school_id = Column(Integer, ForeignKey('schools.id', ondelete='CASCADE'), nullable=False)
 
-    subjects = relationship('TeacherSubject', back_populates='teacher')
-    grades = relationship('Grade', back_populates='teacher')
-    schedules = relationship('Schedule', back_populates='teacher')
+    # Отношения
+    subject = relationship('Subject', back_populates='teachers')
+    grades = relationship('Grade', back_populates='teacher', cascade='all, delete-orphan')
+    schedules = relationship('Schedule', back_populates='teacher', cascade='all, delete-orphan')
     school = relationship('School', back_populates='teachers')
-
