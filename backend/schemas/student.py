@@ -1,7 +1,6 @@
 # backend/schemas/student.py
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
 
 class StudentBase(BaseModel):
     first_name: str
@@ -9,6 +8,7 @@ class StudentBase(BaseModel):
     class_name: str
     parent_id: Optional[int] = None
     contact_info: Optional[str] = None
+    school_id: int  # Новое поле
 
 class StudentCreate(StudentBase):
     pass

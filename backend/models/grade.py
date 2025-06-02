@@ -12,7 +12,10 @@ class Grade(Base):
     student_id = Column(Integer, ForeignKey('students.id'), nullable=False)
     teacher_id = Column(Integer, ForeignKey('teachers.id'), nullable=False)
     subject_id = Column(Integer, ForeignKey('subjects.id'), nullable=False)
+    academic_year_id = Column(Integer, ForeignKey('academic_years.id'), nullable=False)  # Новое поле
 
+    # Отношения
     student = relationship('Student', back_populates='grades')
     teacher = relationship('Teacher', back_populates='grades')
     subject = relationship('Subject', back_populates='grades')
+    academic_year = relationship('AcademicYear', back_populates='grades')  # Новое отношение

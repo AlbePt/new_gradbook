@@ -7,6 +7,8 @@ class ScheduleBase(BaseModel):
     class_name: str
     teacher_id: int
     subject_id: int
+    school_id: int  # Новое поле
+    academic_year_id: int  # Новое поле
 
 class ScheduleCreate(ScheduleBase):
     pass

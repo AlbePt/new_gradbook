@@ -1,5 +1,5 @@
 # backend/models/teacher.py
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from core.db import Base
 
@@ -13,3 +13,6 @@ class Teacher(Base):
     subjects = relationship('TeacherSubject', back_populates='teacher')
     grades = relationship('Grade', back_populates='teacher')
     schedules = relationship('Schedule', back_populates='teacher')
+    school_id = Column(Integer, ForeignKey('schools.id'), nullable=False)
+    school = relationship('School', back_populates='teachers')
+
