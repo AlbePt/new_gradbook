@@ -156,12 +156,14 @@ cd frontend
 npm install
 ```
 
-2. Запустите дев-сервер:
+2. Запустите дев‑сервер:
 
 ```bash
 npm run start
 ```
 
 Приложение будет доступно на `http://localhost:3000`.
+
+Проект использует Redux Toolkit и разделён по сущностям в папке `src/components`. Общая маршрутизация админки находится в `src/routes/AdminRoutes.jsx`.
 
 Подробные эскизы интерфейса представлены в [docs/wireframes.md](docs/wireframes.md).
