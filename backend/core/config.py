@@ -1,6 +1,5 @@
 # backend/core/config.py
-from pydantic_settings import BaseSettings
-from pydantic import PostgresDsn, Field          # остаётся как было
+from pydantic import BaseSettings, Field, PostgresDsn
 
 
 class Settings(BaseSettings):
