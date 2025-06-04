@@ -146,22 +146,3 @@
 
 
 
-
-## Настройка и запуск React (Frontend)
-
-1. Перейдите в папку `frontend/` и установите зависимости (требуется Node.js 16+):
-
-```bash
-cd frontend
-npm install
-```
-
-2. Запустите дев-сервер:
-
-```bash
-npm run start
-```
-
-Приложение будет доступно на `http://localhost:3000`.
-
-Подробные эскизы интерфейса представлены в [docs/wireframes.md](docs/wireframes.md).

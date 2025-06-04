@@ -93,5 +93,3 @@ junitxml.xml
 *.swp
 *.swo
 *.tmp
-/frontend/node_modules
-/frontend/dist
