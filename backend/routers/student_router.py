@@ -1,11 +1,12 @@
 # backend/routers/student_router.py
 from fastapi import APIRouter, Depends, HTTPException
+from utils.dependencies import administrator_required
 from sqlalchemy.orm import Session
 from core.db import get_db
 from schemas.student import StudentCreate, StudentRead
 from repositories.student_repository import StudentRepository
 
-router = APIRouter(prefix="/students", tags=["students"])
+router = APIRouter(prefix="/students", tags=["students"], dependencies=[Depends(administrator_required)])
 
 @router.post("/", response_model=StudentRead)
 def create_student(student: StudentCreate, db: Session = Depends(get_db)):
