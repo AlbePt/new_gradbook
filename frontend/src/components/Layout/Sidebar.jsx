@@ -3,10 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { FiMenu } from 'react-icons/fi';
 
 const links = [
-  { to: '#a', label: 'Сущность A' },
-  { to: '#b', label: 'Сущность B' },
-  { to: '#c', label: 'Сущность C' },
-  { to: '#d', label: 'Сущность D' },
+  { to: 'subjects', label: 'Предметы' },
 ];
 
 export default function Sidebar() {
@@ -16,7 +13,6 @@ export default function Sidebar() {
       <button className="toggle" onClick={() => setOpen(!open)}>
         <FiMenu />
       </button>
-      <h2>НазваниеРаздела</h2>
       <ul>
         {links.map(link => (
           <li key={link.label}>
