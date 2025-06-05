@@ -43,7 +43,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 env/
-venv/
+.venv/
 *.wep
 .python-version
 
