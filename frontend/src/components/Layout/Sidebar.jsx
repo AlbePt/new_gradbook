@@ -3,17 +3,10 @@ import { NavLink } from 'react-router-dom';
 import { FiMenu } from 'react-icons/fi';
 
 const links = [
-  { to: 'cities', label: 'Города' },
-  { to: 'schools', label: 'Школы' },
-  { to: 'academic-years', label: 'Учебные годы' },
-  { to: 'classes', label: 'Классы' },
-  { to: 'subjects', label: 'Предметы' },
-  { to: 'teachers', label: 'Учителя' },
-  { to: 'students', label: 'Студенты' },
-  { to: 'parents', label: 'Родители' },
-  { to: 'attendance', label: 'Посещения' },
-  { to: 'grades', label: 'Оценки' },
-  { to: 'teacher-subjects', label: 'Назначения' },
+  { to: '#a', label: 'Сущность A' },
+  { to: '#b', label: 'Сущность B' },
+  { to: '#c', label: 'Сущность C' },
+  { to: '#d', label: 'Сущность D' },
 ];
 
 export default function Sidebar() {
@@ -23,9 +16,10 @@ export default function Sidebar() {
       <button className="toggle" onClick={() => setOpen(!open)}>
         <FiMenu />
       </button>
+      <h2>НазваниеРаздела</h2>
       <ul>
         {links.map(link => (
-          <li key={link.to}>
+          <li key={link.label}>
             <NavLink to={link.to}>{link.label}</NavLink>
           </li>
         ))}
