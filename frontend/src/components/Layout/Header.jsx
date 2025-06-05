@@ -6,7 +6,7 @@ const menu = [
   { to: '/', label: 'Главная' },
   { to: '/journal', label: 'Журнал' },
   { to: '/planning', label: 'Планирование' },
-  { to: '/admin', label: 'Панель управления' },
+  { to: '/admin', label: 'Справочники' },
   { to: '/reports', label: 'Отчёты' },
 ];
 

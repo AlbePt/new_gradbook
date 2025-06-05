@@ -6,6 +6,7 @@ export default function DashboardPage() {
 
   return (
     <div>
+      <h1>Название страницы</h1>
       <div className="tabs">
         <button
           className={tab === 'data' ? 'active' : ''}
