@@ -3,6 +3,9 @@ import { NavLink } from 'react-router-dom';
 import { FiMenu } from 'react-icons/fi';
 
 const links = [
+  { to: 'regions', label: 'Регионы' },
+  { to: 'cities', label: 'Города' },
+  { to: 'schools', label: 'Школы' },
   { to: 'subjects', label: 'Предметы' },
 ];
 

@@ -1,4 +1,5 @@
 import { combineReducers } from '@reduxjs/toolkit';
+import regionReducer from '../components/Entities/Region/regionSlice.js';
 import cityReducer from '../components/Entities/City/citySlice.js';
 import schoolReducer from '../components/Entities/School/schoolSlice.js';
 import subjectReducer from '../components/Entities/Subject/subjectSlice.js';
@@ -6,6 +7,7 @@ import subjectReducer from '../components/Entities/Subject/subjectSlice.js';
 import notificationReducer from './toastSlice.js';
 
 export default combineReducers({
+  regions: regionReducer,
   cities: cityReducer,
   schools: schoolReducer,
   subjects: subjectReducer,
