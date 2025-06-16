@@ -19,3 +19,12 @@ class UserRepository:
         self.db.refresh(user)
         return user
 
+    def get_all(self, skip: int = 0, limit: int = 100):
+        return self.db.query(User).offset(skip).limit(limit).all()
+
+    def delete(self, user_id: int) -> None:
+        user = self.get(user_id)
+        if user:
+            self.db.delete(user)
+            self.db.commit()
+
