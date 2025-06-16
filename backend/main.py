@@ -15,6 +15,11 @@ from routers.grade_router import router as grade_router
 from routers.schedule_router import router as schedule_router
 from routers.attendance_router import router as attendance_router
 from routers.administrator_router import router as administrator_router
+from routers.region_router import router as region_router
+from routers.city_router import router as city_router
+from routers.school_router import router as school_router
+from routers.academic_year_router import router as academic_year_router
+from routers.user_router import router as user_router
 from routers.auth_router import router as auth_router
 
 
@@ -42,6 +47,11 @@ app.include_router(grade_router)
 app.include_router(schedule_router)
 app.include_router(attendance_router)
 app.include_router(administrator_router)
+app.include_router(region_router)
+app.include_router(city_router)
+app.include_router(school_router)
+app.include_router(academic_year_router)
+app.include_router(user_router)
 app.include_router(auth_router)
 
 # При необходимости создания таблиц без миграций
