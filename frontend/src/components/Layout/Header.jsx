@@ -1,6 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FiUser } from 'react-icons/fi';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Box from '@mui/material/Box';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
 
 const menu = [
   { to: '/', label: 'Главная' },
@@ -12,19 +18,29 @@ const menu = [
 
 export default function Header() {
   return (
-    <header className="app-header">
-      <div className="logo-square"></div>
-      <nav className="main-menu">
-        {menu.map(item => (
-          <NavLink key={item.to} to={item.to} className="menu-link">
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-      <div className="bar-right">
-        <NavLink to="/help">Справка</NavLink>
-        <FiUser />
-      </div>
-    </header>
+    <AppBar position="fixed">
+      <Toolbar>
+        <MenuBookRoundedIcon sx={{ mr: 2 }} />
+        <Box sx={{ flexGrow: 1, display: 'flex', gap: 2 }}>
+          {menu.map(item => (
+            <Button
+              key={item.to}
+              component={NavLink}
+              to={item.to}
+              color="inherit"
+              sx={{ textTransform: 'none' }}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </Box>
+        <Button component={NavLink} to="/help" color="inherit" sx={{ textTransform: 'none' }}>
+          Справка
+        </Button>
+        <IconButton color="inherit">
+          <AccountCircleRoundedIcon />
+        </IconButton>
+      </Toolbar>
+    </AppBar>
   );
 }
