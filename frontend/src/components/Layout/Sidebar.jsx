@@ -4,6 +4,7 @@ import { FiMenu } from 'react-icons/fi';
 
 const links = [
   { to: 'subjects', label: 'Предметы' },
+  { to: 'teachers', label: 'Преподаватели' },
 ];
 
 export default function Sidebar() {
