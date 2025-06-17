@@ -153,20 +153,16 @@
 
 ```bash
 cd frontend
-npm i
+npm install
 ```
 
 2. Запустите дев‑сервер:
 
 ```bash
-npm run dev
+npm run start
 ```
 
 Приложение будет доступно на `http://localhost:3000`.
-
-**Переменные окружения**
-
-- `VITE_API_URL` – адрес backend (пример: `http://localhost:8000`).
 
 Проект использует Redux Toolkit и разделён по сущностям в папке `src/components`. Общая маршрутизация админки находится в `src/routes/AdminRoutes.jsx`.
 
