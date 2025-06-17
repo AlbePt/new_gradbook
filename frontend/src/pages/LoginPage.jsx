@@ -1,42 +1,56 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './login.css';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { TextField, Box, Typography } from '@mui/material';
+import Button from '../components/UI/Button.jsx';
+
+const schema = yup.object({
+  username: yup.string().required('Обязательное поле'),
+  password: yup.string().required('Обязательное поле')
+});
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({ resolver: yupResolver(schema) });
 
-  const handleSubmit = e => {
-    e.preventDefault();
+  const onSubmit = () => {
     // TODO: authenticate via API
     navigate('/');
   };
 
   return (
-    <div className="login-page">
-      <form className="login-form" onSubmit={handleSubmit}>
-        <h2>Вход</h2>
-        <label>
-          Имя пользователя
-          <input
-            type="text"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            required
-          />
-        </label>
-        <label>
-          Пароль
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        <button type="submit">Войти</button>
-      </form>
-    </div>
+    <Box sx={{ maxWidth: 360, mx: 'auto', mt: 8 }}>
+      <Typography variant="h5" component="h1" align="center" gutterBottom>
+        Вход
+      </Typography>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <TextField
+          label="Имя пользователя"
+          fullWidth
+          margin="normal"
+          {...register('username')}
+          error={Boolean(errors.username)}
+          helperText={errors.username?.message}
+        />
+        <TextField
+          label="Пароль"
+          type="password"
+          fullWidth
+          margin="normal"
+          {...register('password')}
+          error={Boolean(errors.password)}
+          helperText={errors.password?.message}
+        />
+        <Button type="submit" fullWidth sx={{ mt: 2 }}>
+          Войти
+        </Button>
+      </Box>
+    </Box>
   );
 }
