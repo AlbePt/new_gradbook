@@ -85,7 +85,7 @@ body {
   display: none;
 }
 .admin-container {
-  margin-top: 60px;
+  margin-top: 96px;
   display: flex;
 }
 
@@ -178,3 +178,7 @@ body {
   background: #0D2F7F;
   color: #fff;
 }
+
+.app-wrapper {display:flex;flex-direction:column;min-height:100vh;}
+.app-content {flex:1;margin-top:96px;}
+
