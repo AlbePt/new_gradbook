@@ -1,17 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import adminClient from '../../../api/adminClient.js';
 import { setSubjects } from './subjectSlice.js';
+import '../../../styles/subjects.css';
 
 export default function SubjectList() {
   const dispatch = useDispatch();
-  const subjects = useSelector(state => state.subjects.items);
-  const list = Array.isArray(subjects) ? subjects : [];
-  const [name, setName] = useState('');
-  const [schoolId, setSchoolId] = useState('');
-  const [editId, setEditId] = useState(null);
-  const [editName, setEditName] = useState('');
-  const [editSchoolId, setEditSchoolId] = useState('');
+  const list = useSelector(state => state.subjects.items) || [];
 
   useEffect(() => {
     adminClient
@@ -20,105 +15,42 @@ export default function SubjectList() {
       .catch(() => {});
   }, [dispatch]);
 
-  const addSubject = () => {
-    adminClient
-      .post('/subjects', { name, school_id: Number(schoolId) })
-      .then(res => {
-        dispatch(setSubjects([...list, res.data]));
-        setName('');
-        setSchoolId('');
-      })
-      .catch(() => {});
-  };
-
-  const startEdit = subj => {
-    setEditId(subj.id);
-    setEditName(subj.name);
-    setEditSchoolId(subj.school_id);
-  };
-
-  const saveEdit = () => {
-    adminClient
-      .put(`/subjects/${editId}`, {
-        name: editName,
-        school_id: Number(editSchoolId),
-      })
-      .then(res => {
-        dispatch(setSubjects(list.map(s => (s.id === editId ? res.data : s))));
-        setEditId(null);
-      })
-      .catch(() => {});
-  };
-
-  const remove = id => {
-    adminClient.delete(`/subjects/${id}`).then(() => {
-      dispatch(setSubjects(list.filter(s => s.id !== id)));
-    });
-  };
-
   return (
-    <div>
-      <h1>Предметы</h1>
-      <div>
-        <input
-          placeholder="Название"
-          value={name}
-          onChange={e => setName(e.target.value)}
-        />
-        <input
-          placeholder="ID школы"
-          value={schoolId}
-          onChange={e => setSchoolId(e.target.value)}
-        />
-        <button onClick={addSubject}>Добавить</button>
+    <section className="subjects-page">
+      <h1 className="subjects-title">П Р Е Д М Е Т Ы</h1>
+      <div className="year-switch">
+        <span>&larr;</span>
+        <span>2024-2025</span>
+        <span>&rarr;</span>
       </div>
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Название</th>
-            <th>Школа</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {list.map(s => (
-            <tr key={s.id}>
-              <td>{s.id}</td>
-              <td>
-                {editId === s.id ? (
-                  <input
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                  />
-                ) : (
-                  s.name
-                )}
-              </td>
-              <td>
-                {editId === s.id ? (
-                  <input
-                    value={editSchoolId}
-                    onChange={e => setEditSchoolId(e.target.value)}
-                  />
-                ) : (
-                  s.school_id
-                )}
-              </td>
-              <td>
-                {editId === s.id ? (
-                  <button onClick={saveEdit}>Сохранить</button>
-                ) : (
-                  <>
-                    <button onClick={() => startEdit(s)}>Ред.</button>
-                    <button onClick={() => remove(s.id)}>X</button>
-                  </>
-                )}
-              </td>
+      <div className="subject-tabs">
+        <button className="active">■ Предметы для уроков</button>
+        <button>Предметы для внеурочной деятельности</button>
+      </div>
+      <button className="add-btn">+ Добавить предметы</button>
+      <p className="count">Всего предметов: {list.length}</p>
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>Название</th>
+              <th>Ступени</th>
+              <th>Область</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {list.map((s, idx) => (
+              <tr key={s.id || idx}>
+                <td>{idx + 1}</td>
+                <td>{s.name}</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
