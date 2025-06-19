@@ -112,9 +112,13 @@ body {
   background: #fff;
   box-shadow: inset 0 -1px 0 #E1E4EB;
 }
-.data-table th, .data-table td {
+.data-table th,
+.data-table td {
   padding: 8px;
   border-bottom: 1px solid #E1E4EB;
+}
+.data-table th {
+  text-align: left;
 }
 .data-table tbody tr:nth-child(even) {
   background: #FAFBFD;

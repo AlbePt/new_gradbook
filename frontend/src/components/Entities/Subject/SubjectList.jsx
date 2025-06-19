@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import adminClient from '../../../api/adminClient.js';
 import { setSubjects } from './subjectSlice.js';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
 
 export default function SubjectList() {
   const dispatch = useDispatch();
@@ -9,6 +15,7 @@ export default function SubjectList() {
   const list = Array.isArray(subjects) ? subjects : [];
   const [name, setName] = useState('');
   const [schoolId, setSchoolId] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState('');
   const [editSchoolId, setEditSchoolId] = useState('');
@@ -27,6 +34,7 @@ export default function SubjectList() {
         dispatch(setSubjects([...list, res.data]));
         setName('');
         setSchoolId('');
+        setAddOpen(false);
       })
       .catch(() => {});
   };
@@ -59,19 +67,26 @@ export default function SubjectList() {
   return (
     <div>
       <h1>Предметы</h1>
-      <div>
-        <input
-          placeholder="Название"
-          value={name}
-          onChange={e => setName(e.target.value)}
-        />
-        <input
-          placeholder="ID школы"
-          value={schoolId}
-          onChange={e => setSchoolId(e.target.value)}
-        />
-        <button onClick={addSubject}>Добавить</button>
-      </div>
+      <Button variant="contained" className="add-btn" onClick={() => setAddOpen(true)}>
+        Добавить
+      </Button>
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)}>
+        <DialogTitle>Новый предмет</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <TextField label="Название" value={name} onChange={e => setName(e.target.value)} />
+          <TextField
+            label="ID школы"
+            value={schoolId}
+            onChange={e => setSchoolId(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddOpen(false)}>Отмена</Button>
+          <Button onClick={addSubject} variant="contained">
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
       <table className="data-table">
         <thead>
           <tr>
