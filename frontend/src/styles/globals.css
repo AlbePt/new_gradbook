@@ -178,3 +178,9 @@ body {
   background: #0D2F7F;
   color: #fff;
 }
+
+.admin-wrapper { max-width: 1200px; margin: 60px auto; display: flex; }
+.admin-sidebar { position: sticky; top: 80px; align-self: flex-start; margin-right: 16px; }
+.admin-content-scroll { flex: 1; overflow-y: auto; max-height: calc(100vh - 120px); padding: 32px; }
+.app-footer { background: #0D2F7F; color: #fff; text-align: center; padding: 16px; margin-top: auto; }
+
