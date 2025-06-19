@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 
 const links = [
@@ -28,7 +28,7 @@ export default function Sidebar() {
   }
 
   return (
-    <Drawer variant="permanent" open>
+    <Paper className="sidebar" elevation={0}>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
         <IconButton onClick={() => setOpen(false)} size="large">
           <MenuRoundedIcon />
@@ -43,6 +43,6 @@ export default function Sidebar() {
           </ListItem>
         ))}
       </List>
-    </Drawer>
+    </Paper>
   );
 }

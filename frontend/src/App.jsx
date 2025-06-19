@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Layout/Header.jsx';
+import Footer from './components/Layout/Footer.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import NotFound from './pages/NotFound.jsx';
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/" element={<div>Home</div>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Footer />
     </>
   );
 }
