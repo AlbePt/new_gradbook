@@ -1,13 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
+import { FaBook, FaUserCircle } from 'react-icons/fa';
 
 const menu = [
   { to: '/', label: 'Главная' },
@@ -19,38 +12,38 @@ const menu = [
 
 export default function Header() {
   return (
-    <AppBar position="fixed">
-      <Toolbar disableGutters>
-        <Container
-          maxWidth="lg"
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
+      <div className="container-fluid">
+        <NavLink className="navbar-brand d-flex align-items-center gap-2" to="/">
+          <FaBook /> Gradebook
+        </NavLink>
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNav"
+          aria-controls="mainNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <MenuBookRoundedIcon />
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              {menu.map(item => (
-                <Button
-                  key={item.to}
-                  component={NavLink}
-                  to={item.to}
-                  color="inherit"
-                  sx={{ textTransform: 'none' }}
-                >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+        <div className="collapse navbar-collapse" id="mainNav">
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            {menu.map(item => (
+              <li className="nav-item" key={item.to}>
+                <NavLink to={item.to} className="nav-link">
                   {item.label}
-                </Button>
-              ))}
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button component={NavLink} to="/help" color="inherit" sx={{ textTransform: 'none' }}>
-              Справка
-            </Button>
-            <IconButton color="inherit">
-              <AccountCircleRoundedIcon />
-            </IconButton>
-          </Box>
-        </Container>
-      </Toolbar>
-    </AppBar>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+          <NavLink to="/help" className="nav-link text-white me-3">
+            Справка
+          </NavLink>
+          <FaUserCircle className="text-white" />
+        </div>
+      </div>
+    </nav>
   );
 }

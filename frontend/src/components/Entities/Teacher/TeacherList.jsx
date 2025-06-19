@@ -2,17 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import adminClient from '../../../api/adminClient.js';
 import { setTeachers } from './teacherSlice.js';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 
 export default function TeacherList() {
   const dispatch = useDispatch();
-  const teachers = useSelector(state => state.teachers.items);
-  const list = Array.isArray(teachers) ? teachers : [];
+  const teachers = useSelector(state => state.teachers.items) || [];
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -42,7 +35,7 @@ export default function TeacherList() {
         school_id: Number(schoolId),
       })
       .then(res => {
-        dispatch(setTeachers([...list, res.data]));
+        dispatch(setTeachers([...teachers, res.data]));
         setFirstName('');
         setLastName('');
         setContactInfo('');
@@ -69,7 +62,7 @@ export default function TeacherList() {
         school_id: Number(editSchoolId),
       })
       .then(res => {
-        dispatch(setTeachers(list.map(t => (t.id === editId ? res.data : t))));
+        dispatch(setTeachers(teachers.map(t => (t.id === editId ? res.data : t))));
         setEditId(null);
       })
       .catch(() => {});
@@ -77,32 +70,57 @@ export default function TeacherList() {
 
   const remove = id => {
     adminClient.delete(`/teachers/${id}`).then(() => {
-      dispatch(setTeachers(list.filter(t => t.id !== id)));
+      dispatch(setTeachers(teachers.filter(t => t.id !== id)));
     });
   };
 
   return (
     <div>
-      <h1>Преподаватели</h1>
-      <Button variant="contained" className="add-btn" onClick={() => setAddOpen(true)}>
+      <h1 className="mb-3">Преподаватели</h1>
+      <button className="btn btn-primary mb-3" onClick={() => setAddOpen(true)}>
         Добавить
-      </Button>
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)}>
-        <DialogTitle>Новый преподаватель</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          <TextField label="Имя" value={firstName} onChange={e => setFirstName(e.target.value)} />
-          <TextField label="Фамилия" value={lastName} onChange={e => setLastName(e.target.value)} />
-          <TextField label="Контакт" value={contactInfo} onChange={e => setContactInfo(e.target.value)} />
-          <TextField label="ID школы" value={schoolId} onChange={e => setSchoolId(e.target.value)} />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddOpen(false)}>Отмена</Button>
-          <Button onClick={addTeacher} variant="contained">
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <table className="data-table">
+      </button>
+
+      {addOpen && (
+        <div className="modal d-block" tabIndex="-1" onClick={() => setAddOpen(false)}>
+          <div className="modal-dialog" onClick={e => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Новый преподаватель</h5>
+                <button type="button" className="btn-close" onClick={() => setAddOpen(false)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label">Имя</label>
+                  <input className="form-control" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Фамилия</label>
+                  <input className="form-control" value={lastName} onChange={e => setLastName(e.target.value)} />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Контакт</label>
+                  <input className="form-control" value={contactInfo} onChange={e => setContactInfo(e.target.value)} />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">ID школы</label>
+                  <input className="form-control" value={schoolId} onChange={e => setSchoolId(e.target.value)} />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setAddOpen(false)}>
+                  Отмена
+                </button>
+                <button className="btn btn-primary" onClick={addTeacher}>
+                  Сохранить
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <table className="table table-hover align-middle">
         <thead>
           <tr>
             <th>ID</th>
@@ -114,56 +132,48 @@ export default function TeacherList() {
           </tr>
         </thead>
         <tbody>
-          {list.map(t => (
+          {teachers.map(t => (
             <tr key={t.id}>
               <td>{t.id}</td>
               <td>
                 {editId === t.id ? (
-                  <input
-                    value={editFirstName}
-                    onChange={e => setEditFirstName(e.target.value)}
-                  />
+                  <input value={editFirstName} onChange={e => setEditFirstName(e.target.value)} />
                 ) : (
                   t.first_name
                 )}
               </td>
               <td>
                 {editId === t.id ? (
-                  <input
-                    value={editLastName}
-                    onChange={e => setEditLastName(e.target.value)}
-                  />
+                  <input value={editLastName} onChange={e => setEditLastName(e.target.value)} />
                 ) : (
                   t.last_name
                 )}
               </td>
               <td>
                 {editId === t.id ? (
-                  <input
-                    value={editContactInfo}
-                    onChange={e => setEditContactInfo(e.target.value)}
-                  />
+                  <input value={editContactInfo} onChange={e => setEditContactInfo(e.target.value)} />
                 ) : (
                   t.contact_info
                 )}
               </td>
               <td>
                 {editId === t.id ? (
-                  <input
-                    value={editSchoolId}
-                    onChange={e => setEditSchoolId(e.target.value)}
-                  />
+                  <input value={editSchoolId} onChange={e => setEditSchoolId(e.target.value)} />
                 ) : (
                   t.school_id
                 )}
               </td>
               <td>
                 {editId === t.id ? (
-                  <button onClick={saveEdit}>Сохранить</button>
+                  <button className="btn btn-sm btn-primary" onClick={saveEdit}>Сохранить</button>
                 ) : (
                   <>
-                    <button onClick={() => startEdit(t)}>Ред.</button>
-                    <button onClick={() => remove(t.id)}>X</button>
+                    <button className="btn btn-sm btn-link" onClick={() => startEdit(t)}>
+                      Ред.
+                    </button>
+                    <button className="btn btn-sm btn-link text-danger" onClick={() => remove(t.id)}>
+                      X
+                    </button>
                   </>
                 )}
               </td>

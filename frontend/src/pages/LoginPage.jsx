@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
-import Paper from '@mui/material/Paper';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -19,34 +13,33 @@ export default function LoginPage() {
   };
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Container maxWidth="xs">
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography variant="h5" component="h2" align="center">
-              Вход
-            </Typography>
-            <TextField
-              label="Имя пользователя"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              required
-              fullWidth
-            />
-            <TextField
-              label="Пароль"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              fullWidth
-            />
-            <Button type="submit" variant="contained" fullWidth>
-              Войти
-            </Button>
-          </Box>
-        </Paper>
-      </Container>
-    </Box>
+    <div className="d-flex align-items-center justify-content-center min-vh-100 bg-light">
+      <form className="p-4 bg-white rounded shadow" style={{ minWidth: '320px' }} onSubmit={handleSubmit}>
+        <h2 className="mb-3 text-center">Вход</h2>
+        <div className="mb-3">
+          <label className="form-label">Имя пользователя</label>
+          <input
+            type="text"
+            className="form-control"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Пароль</label>
+          <input
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-primary w-100">
+          Войти
+        </button>
+      </form>
+    </div>
   );
 }
