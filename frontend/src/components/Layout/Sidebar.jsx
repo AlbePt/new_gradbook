@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import IconButton from '@mui/material/IconButton';
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 
 const links = [
   { to: 'subjects', label: 'Предметы' },
@@ -17,32 +9,23 @@ const links = [
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
 
-  if (!open) {
-    return (
-      <Box sx={{ p: 1 }}>
-        <IconButton onClick={() => setOpen(true)} size="large">
-          <MenuRoundedIcon />
-        </IconButton>
-      </Box>
-    );
-  }
-
   return (
-    <Paper className="sidebar" elevation={0}>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
-        <IconButton onClick={() => setOpen(false)} size="large">
-          <MenuRoundedIcon />
-        </IconButton>
-      </Box>
-      <List>
+    <nav className={`sidebar bg-light p-3 ${open ? '' : 'collapsed'}`}>
+      <button
+        className="btn btn-sm btn-outline-secondary d-lg-none mb-3"
+        onClick={() => setOpen(o => !o)}
+      >
+        ☰
+      </button>
+      <ul className="nav nav-pills flex-column">
         {links.map(link => (
-          <ListItem key={link.label} disablePadding>
-            <ListItemButton component={NavLink} to={link.to}>
-              <ListItemText primary={link.label} />
-            </ListItemButton>
-          </ListItem>
+          <li className="nav-item" key={link.label}>
+            <NavLink to={link.to} end className="nav-link">
+              {link.label}
+            </NavLink>
+          </li>
         ))}
-      </List>
-    </Paper>
+      </ul>
+    </nav>
   );
 }

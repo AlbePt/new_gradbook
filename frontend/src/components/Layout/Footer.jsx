@@ -1,10 +1,9 @@
 import React from 'react';
-import Box from '@mui/material/Box';
 
 export default function Footer() {
   return (
-    <Box component="footer" className="app-footer">
+    <footer className="app-footer bg-primary text-white text-center p-3 mt-auto">
       <span>© 2024 Gradebook</span>
-    </Box>
+    </footer>
   );
 }

@@ -2,17 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import adminClient from '../../../api/adminClient.js';
 import { setSubjects } from './subjectSlice.js';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 
 export default function SubjectList() {
   const dispatch = useDispatch();
-  const subjects = useSelector(state => state.subjects.items);
-  const list = Array.isArray(subjects) ? subjects : [];
+  const subjects = useSelector(state => state.subjects.items) || [];
   const [name, setName] = useState('');
   const [schoolId, setSchoolId] = useState('');
   const [addOpen, setAddOpen] = useState(false);
@@ -31,7 +24,7 @@ export default function SubjectList() {
     adminClient
       .post('/subjects', { name, school_id: Number(schoolId) })
       .then(res => {
-        dispatch(setSubjects([...list, res.data]));
+        dispatch(setSubjects([...subjects, res.data]));
         setName('');
         setSchoolId('');
         setAddOpen(false);
@@ -52,7 +45,7 @@ export default function SubjectList() {
         school_id: Number(editSchoolId),
       })
       .then(res => {
-        dispatch(setSubjects(list.map(s => (s.id === editId ? res.data : s))));
+        dispatch(setSubjects(subjects.map(s => (s.id === editId ? res.data : s))));
         setEditId(null);
       })
       .catch(() => {});
@@ -60,34 +53,49 @@ export default function SubjectList() {
 
   const remove = id => {
     adminClient.delete(`/subjects/${id}`).then(() => {
-      dispatch(setSubjects(list.filter(s => s.id !== id)));
+      dispatch(setSubjects(subjects.filter(s => s.id !== id)));
     });
   };
 
   return (
     <div>
-      <h1>Предметы</h1>
-      <Button variant="contained" className="add-btn" onClick={() => setAddOpen(true)}>
+      <h1 className="mb-3">Предметы</h1>
+      <button className="btn btn-primary mb-3" onClick={() => setAddOpen(true)}>
         Добавить
-      </Button>
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)}>
-        <DialogTitle>Новый предмет</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          <TextField label="Название" value={name} onChange={e => setName(e.target.value)} />
-          <TextField
-            label="ID школы"
-            value={schoolId}
-            onChange={e => setSchoolId(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddOpen(false)}>Отмена</Button>
-          <Button onClick={addSubject} variant="contained">
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <table className="data-table">
+      </button>
+
+      {addOpen && (
+        <div className="modal d-block" tabIndex="-1" onClick={() => setAddOpen(false)}>
+          <div className="modal-dialog" onClick={e => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Новый предмет</h5>
+                <button type="button" className="btn-close" onClick={() => setAddOpen(false)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label">Название</label>
+                  <input className="form-control" value={name} onChange={e => setName(e.target.value)} />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">ID школы</label>
+                  <input className="form-control" value={schoolId} onChange={e => setSchoolId(e.target.value)} />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setAddOpen(false)}>
+                  Отмена
+                </button>
+                <button className="btn btn-primary" onClick={addSubject}>
+                  Сохранить
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <table className="table table-hover align-middle">
         <thead>
           <tr>
             <th>ID</th>
@@ -97,36 +105,34 @@ export default function SubjectList() {
           </tr>
         </thead>
         <tbody>
-          {list.map(s => (
+          {subjects.map(s => (
             <tr key={s.id}>
               <td>{s.id}</td>
               <td>
                 {editId === s.id ? (
-                  <input
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                  />
+                  <input value={editName} onChange={e => setEditName(e.target.value)} />
                 ) : (
                   s.name
                 )}
               </td>
               <td>
                 {editId === s.id ? (
-                  <input
-                    value={editSchoolId}
-                    onChange={e => setEditSchoolId(e.target.value)}
-                  />
+                  <input value={editSchoolId} onChange={e => setEditSchoolId(e.target.value)} />
                 ) : (
                   s.school_id
                 )}
               </td>
               <td>
                 {editId === s.id ? (
-                  <button onClick={saveEdit}>Сохранить</button>
+                  <button className="btn btn-sm btn-primary" onClick={saveEdit}>Сохранить</button>
                 ) : (
                   <>
-                    <button onClick={() => startEdit(s)}>Ред.</button>
-                    <button onClick={() => remove(s.id)}>X</button>
+                    <button className="btn btn-sm btn-link" onClick={() => startEdit(s)}>
+                      Ред.
+                    </button>
+                    <button className="btn btn-sm btn-link text-danger" onClick={() => remove(s.id)}>
+                      X
+                    </button>
                   </>
                 )}
               </td>

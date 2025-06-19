@@ -5,11 +5,11 @@ import Notifications from '../components/Layout/Notifications.jsx';
 
 export default function AdminDashboard() {
   return (
-    <div className="admin-wrapper">
+    <div className="admin-wrapper d-flex">
       <div className="admin-sidebar">
         <Sidebar />
       </div>
-      <div className="admin-content-scroll">
+      <div className="admin-content-scroll flex-grow-1">
         <AdminRoutes />
         <Notifications />
       </div>

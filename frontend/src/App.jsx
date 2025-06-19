@@ -5,7 +5,7 @@ import Footer from './components/Layout/Footer.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import NotFound from './pages/NotFound.jsx';
-import './styles/globals.css';
+import './styles/main.scss';
 
 export default function App() {
   return (
