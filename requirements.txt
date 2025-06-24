@@ -7,3 +7,7 @@ pydantic
 passlib[bcrypt]
 python-dotenv       # при использовании .env
 python-multipart    # если понадобятся загрузки файлов
+pandas
+openpyxl
+structlog
+testing.postgresql
