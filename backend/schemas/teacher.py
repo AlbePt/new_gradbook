@@ -3,8 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class TeacherBase(BaseModel):
-    first_name: str
-    last_name: str
+    full_name: str
     contact_info: Optional[str] = None
     school_id: int  # Новое поле
 
