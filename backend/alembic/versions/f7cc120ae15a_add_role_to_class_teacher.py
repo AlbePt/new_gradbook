@@ -19,10 +19,29 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('class_teachers', sa.Column('role', sa.Enum('homeroom', 'assistant', name='classteacherrole'), nullable=False, server_default='assistant'))
-    op.alter_column('class_teachers', 'role', server_default=None)
-
+    op.add_column(
+        "class_teachers",
+        sa.Column(
+            "role",
+            sa.String(length=20),
+            nullable=False,
+            server_default="regular"
+        )
+    )
+    op.create_check_constraint(
+        "chk_class_teacher_role",
+        "class_teachers",
+        "role IN ('regular','homeroom','assistant')"
+    )
+    op.create_index(
+        "uq_one_homeroom_per_class",
+        "class_teachers",
+        ["class_id"],
+        unique=True,
+        postgresql_where=sa.text("role = 'homeroom'")
+    )
 
 def downgrade() -> None:
-    op.drop_column('class_teachers', 'role')
-    op.execute('DROP TYPE IF EXISTS classteacherrole')
+    op.drop_index("uq_one_homeroom_per_class", table_name="class_teachers")
+    op.drop_constraint("chk_class_teacher_role", "class_teachers", type_="check")
+    op.drop_column("class_teachers", "role")
