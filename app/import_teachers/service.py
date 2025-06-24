@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from backend.models import (
+from models import (
     Class,
     ClassTeacher,
     ClassTeacherRole,

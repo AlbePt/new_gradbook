@@ -22,8 +22,17 @@ from sqlalchemy.orm import sessionmaker
 
 from app.import_teachers.service import import_teachers_from_file
 from backend.core.db import Base
-from backend.models import (City, Class, ClassTeacher, ClassTeacherRole,
-                            Region, School, Subject, Teacher, TeacherSubject)
+from models import (
+    City,
+    Class,
+    ClassTeacher,
+    ClassTeacherRole,
+    Region,
+    School,
+    Subject,
+    Teacher,
+    TeacherSubject,
+)
 
 
 def run_migrations(url: str) -> None:
