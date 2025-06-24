@@ -22,3 +22,11 @@ class Teacher(Base):
         cascade='all, delete-orphan'
     )
     classes = relationship('Class', secondary='class_teachers', back_populates='teachers')
+    class_teachers = relationship('ClassTeacher', back_populates='teacher', cascade='all, delete-orphan')
+    homeroom_classes = relationship(
+        'Class',
+        secondary='class_teachers',
+        primaryjoin="and_(Teacher.id==ClassTeacher.teacher_id, ClassTeacher.role=='homeroom')",
+        secondaryjoin="Class.id==ClassTeacher.class_id",
+        viewonly=True,
+    )
