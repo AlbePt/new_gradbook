@@ -2,6 +2,14 @@
 from fastapi import FastAPI
 from core.db import engine, Base
 
+# Ensure project root is in the import path when running from ``backend``
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
+
 # Импорт моделей для регистрации в metadata
 from models import student, teacher, subject, teacher_subject, parent, grade, schedule, attendance, administrator, user  # noqa
 
