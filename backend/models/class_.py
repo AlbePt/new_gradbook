@@ -14,6 +14,7 @@ class_subjects = Table(
 )
 
 class ClassTeacherRole(str, enum.Enum):
+    regular = "regular"
     homeroom = "homeroom"
     assistant = "assistant"
 

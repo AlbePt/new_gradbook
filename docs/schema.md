@@ -126,7 +126,7 @@ This document summarizes the SQLAlchemy models used in the backend.
   - `id` – primary key
   - `name` – unique
   - `school_id` – FK to `schools.id` (CASCADE)
-- **Relationships:** has many `students`, many-to-many with `Subject` via `class_subjects` and with `Teacher` via `class_teachers`. `class_teachers` records determine homeroom/assistant teachers.
+- **Relationships:** has many `students`, many-to-many with `Subject` via `class_subjects` and with `Teacher` via `class_teachers`. `class_teachers` records determine homeroom, assistant or regular teachers.
 
 ## ClassTeacher
 - **Table:** `class_teachers`
@@ -146,6 +146,6 @@ This document summarizes the SQLAlchemy models used in the backend.
 
 ### Enumerations
 - **RoleEnum:** defines user roles (`superuser`, `administrator`, `teacher`, `student`, `parent`).
-- **ClassTeacherRole:** roles for the `class_teachers` table (`homeroom`, `assistant`).
+- **ClassTeacherRole:** roles for the `class_teachers` table (`regular`, `homeroom`, `assistant`).
 
 Cascade behaviors are mainly used on foreign keys with `ondelete='CASCADE'` to automatically remove dependent records.
