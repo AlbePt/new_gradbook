@@ -16,3 +16,4 @@ class School(Base):
     teachers = relationship('Teacher', back_populates='school', cascade='all, delete-orphan')
     schedules = relationship('Schedule', back_populates='school', cascade='all, delete-orphan')
     subjects = relationship('Subject', back_populates='school', cascade='all, delete-orphan')
+    classes = relationship('Class', back_populates='school', cascade='all, delete-orphan')

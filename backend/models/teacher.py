@@ -21,4 +21,5 @@ class Teacher(Base):
         'TeacherSubject',
         back_populates='teacher',
         cascade='all, delete-orphan'
-    )    
+    )
+    classes = relationship('Class', secondary='class_teachers', back_populates='teachers')

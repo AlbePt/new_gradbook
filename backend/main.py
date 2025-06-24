@@ -13,6 +13,7 @@ from routers.teacher_subject_router import router as teacher_subject_router
 from routers.parent_router import router as parent_router
 from routers.grade_router import router as grade_router
 from routers.schedule_router import router as schedule_router
+from routers.class_router import router as class_router
 from routers.attendance_router import router as attendance_router
 from routers.administrator_router import router as administrator_router
 from routers.region_router import router as region_router
@@ -45,6 +46,7 @@ app.include_router(teacher_subject_router)
 app.include_router(parent_router)
 app.include_router(grade_router)
 app.include_router(schedule_router)
+app.include_router(class_router)
 app.include_router(attendance_router)
 app.include_router(administrator_router)
 app.include_router(region_router)

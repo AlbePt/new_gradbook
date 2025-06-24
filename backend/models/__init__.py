@@ -12,4 +12,5 @@ from .grade import Grade
 from .parent import Parent
 from .subject import Subject
 from .teacher_subject import TeacherSubject
+from .class_ import Class, class_subjects, class_teachers
 from .user import User, RoleEnum

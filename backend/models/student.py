@@ -9,6 +9,7 @@ class Student(Base):
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String(50), nullable=False)
     class_name = Column(String(10), nullable=False)
+    class_id = Column(Integer, ForeignKey('classes.id', ondelete='CASCADE'), nullable=False)
     parent_id = Column(Integer, ForeignKey('parents.id', ondelete='SET NULL'), nullable=True)
     contact_info = Column(String(100), nullable=True)
     school_id = Column(Integer, ForeignKey('schools.id', ondelete='CASCADE'), nullable=False)
@@ -18,3 +19,4 @@ class Student(Base):
     grades = relationship('Grade', back_populates='student', cascade='all, delete-orphan')
     attendance_records = relationship('Attendance', back_populates='student', cascade='all, delete-orphan')
     school = relationship('School', back_populates='students')
+    school_class = relationship('Class', back_populates='students')
