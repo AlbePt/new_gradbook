@@ -7,8 +7,7 @@ class Student(Base):
     __tablename__ = 'students'
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(50), nullable=False)
-    last_name = Column(String(50), nullable=False)
+    full_name = Column(String(50), nullable=False)
     class_name = Column(String(10), nullable=False)
     parent_id = Column(Integer, ForeignKey('parents.id', ondelete='SET NULL'), nullable=True)
     contact_info = Column(String(100), nullable=True)
