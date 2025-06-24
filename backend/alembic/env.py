@@ -12,7 +12,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from core.db import Base  # SQLAlchemy Base
 # Импорт всех моделей для регистрации метаданных
-from models import student, teacher, subject, teacher_subject, parent, grade, schedule, attendance, administrator  # noqa
+from models import student, teacher, subject, teacher_subject, parent, grade, schedule, attendance, administrator, class_  # noqa
 
 from core.config import settings
 
