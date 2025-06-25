@@ -59,7 +59,8 @@ def _handle_row(
         regular_classes = _parse_list(row["Класс"])
         # if a teacher is homeroom for a class, we don't create an additional
         # regular association for the same class
-        regular_classes = [c for c in regular_classes if c not in homeroom_classes]
+        regular_classes = [
+            c for c in regular_classes if c not in homeroom_classes]
 
         teacher_cache = caches.setdefault("teachers", {})
         subject_cache = caches.setdefault("subjects", {})
@@ -252,7 +253,8 @@ def import_teachers_from_file(
     dry_run: bool = False,
     truncate_associations: bool = False,
 ) -> ImportReport:
-    header_df = pd.read_excel(path, sheet_name="Справочник педагоги", nrows=2, header=None)
+    header_df = pd.read_excel(
+        path, sheet_name="Справочник педагоги", nrows=2, header=None)
     year_line = str(header_df.iloc[0, 0])
     school_name = str(header_df.iloc[1, 0]).strip()
     m = re.search(r"(\d{4})/(\d{4})", year_line)
@@ -294,7 +296,8 @@ def import_teachers_from_file(
             ClassTeacher.academic_year_id == academic_year.id,
         ).delete(synchronize_session=False)
 
-    teacher_ids = [tid for (tid,) in db.query(Teacher.id).filter_by(school_id=school.id).all()]
+    teacher_ids = [tid for (tid,) in db.query(
+        Teacher.id).filter_by(school_id=school.id).all()]
     if teacher_ids:
         db.query(TeacherSubject).filter(
             TeacherSubject.teacher_id.in_(teacher_ids),
@@ -302,7 +305,7 @@ def import_teachers_from_file(
         ).delete(synchronize_session=False)
 
     for start in range(0, len(df), 500):
-        chunk = df.iloc[start : start + 500]
+        chunk = df.iloc[start: start + 500]
         for _, row in chunk.iterrows():
             errors = _handle_row(
                 row,
