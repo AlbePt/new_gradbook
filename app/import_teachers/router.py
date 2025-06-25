@@ -1,4 +1,5 @@
 from pathlib import Path
+import tempfile
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
@@ -18,7 +19,8 @@ async def import_teachers_endpoint(
     truncate_associations: bool = Query(False),
     db: Session = Depends(get_db),
 ):
-    tmp_path = Path("/tmp") / f"{uuid4()}.xlsx"
+    tmp_dir = Path(tempfile.gettempdir())  
+    tmp_path = tmp_dir / f"{uuid4()}.xlsx"
     tmp_path.write_bytes(await file.read())
     try:
         report = import_teachers_from_file(
