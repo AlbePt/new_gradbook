@@ -8,6 +8,7 @@ class School(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(150), nullable=False)
+    full_name = Column(String(255), nullable=True)
     city_id = Column(Integer, ForeignKey('cities.id', ondelete='CASCADE'), nullable=False)
 
     # Отношения
