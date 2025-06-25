@@ -112,6 +112,7 @@ def _handle_row(
                         academic_year_id=academic_year_id,
                     )
                 )
+                db.flush()
                 report.teacher_subjects_created += 1
             ts_cache.add((teacher_name, subject_name, academic_year_id))
 
@@ -162,6 +163,7 @@ def _handle_row(
                             role=ClassTeacherRole.regular,
                         )
                     )
+                    db.flush()
                     report.class_teachers_created += 1
                 ct_cache.add(key)
 
@@ -199,6 +201,7 @@ def _handle_row(
                             role=ClassTeacherRole.homeroom,
                         )
                     )
+                    db.flush()
                     report.class_teachers_created += 1
                 ct_cache.add(key)
     except Exception as exc:  # pylint: disable=broad-except
