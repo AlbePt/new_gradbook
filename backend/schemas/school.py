@@ -1,10 +1,12 @@
 # backend/schemas/school.py
 from __future__ import annotations
 from pydantic import BaseModel
+from typing import Optional
 
 class SchoolBase(BaseModel):
     name: str
     city_id: int
+    full_name: Optional[str] = None
 
 class SchoolCreate(SchoolBase):
     pass
