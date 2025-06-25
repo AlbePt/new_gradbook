@@ -6,6 +6,7 @@ from models.class_ import ClassTeacherRole
 class ClassTeacherBase(BaseModel):
     class_id: int
     teacher_id: int
+    academic_year_id: int
     role: ClassTeacherRole
 
 
