@@ -15,3 +15,6 @@ class AcademicYear(Base):
     schedules = relationship('Schedule', back_populates='academic_year', cascade='all, delete-orphan')
     grades = relationship('Grade', back_populates='academic_year', cascade='all, delete-orphan')
     attendance_records = relationship('Attendance', back_populates='academic_year', cascade='all, delete-orphan')
+    classes = relationship('Class', back_populates='academic_year', cascade='all, delete-orphan')
+    teacher_subjects = relationship('TeacherSubject', back_populates='academic_year', cascade='all, delete-orphan')
+    class_teachers = relationship('ClassTeacher', back_populates='academic_year', cascade='all, delete-orphan')

@@ -6,10 +6,15 @@ from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from datetime import date
+import re
+
 from models import (
+    AcademicYear,
     Class,
     ClassTeacher,
     ClassTeacherRole,
+    School,
     Subject,
     Teacher,
     TeacherSubject,
@@ -43,6 +48,7 @@ def _handle_row(
     caches: dict,
     report: ImportReport,
     school_id: int,
+    academic_year_id: int,
 ) -> None | list[ImportError]:
     try:
         teacher_name = str(row["ФИО педагога"]).strip()
@@ -82,39 +88,60 @@ def _handle_row(
                 report.subjects_created += 1
             subject_cache[subject_name] = subject
 
-        if (teacher_name, subject_name) not in ts_cache:
+        if (teacher_name, subject_name, academic_year_id) not in ts_cache:
             exists = (
                 db.query(TeacherSubject)
-                .filter_by(teacher_id=teacher.id, subject_id=subject.id)
+                .filter_by(
+                    teacher_id=teacher.id,
+                    subject_id=subject.id,
+                    academic_year_id=academic_year_id,
+                )
                 .first()
             )
             if not exists:
-                db.add(TeacherSubject(teacher=teacher, subject=subject))
+                db.add(
+                    TeacherSubject(
+                        teacher=teacher,
+                        subject=subject,
+                        academic_year_id=academic_year_id,
+                    )
+                )
                 report.teacher_subjects_created += 1
-            ts_cache.add((teacher_name, subject_name))
+            ts_cache.add((teacher_name, subject_name, academic_year_id))
 
         all_labels = set(homeroom_classes + regular_classes)
         for label in all_labels:
             school_class = class_cache.get(label)
             if school_class is None:
                 school_class = (
-                    db.query(Class).filter_by(name=label, school_id=school_id).first()
+                    db.query(Class)
+                    .filter_by(
+                        name=label,
+                        school_id=school_id,
+                        academic_year_id=academic_year_id,
+                    )
+                    .first()
                 )
                 if school_class is None:
-                    school_class = Class(name=label, school_id=school_id)
+                    school_class = Class(
+                        name=label,
+                        school_id=school_id,
+                        academic_year_id=academic_year_id,
+                    )
                     db.add(school_class)
                     report.classes_created += 1
                 class_cache[label] = school_class
 
         for label in regular_classes:
             sc = class_cache[label]
-            key = (sc.id, teacher.id, "regular")
+            key = (sc.id, teacher.id, academic_year_id, "regular")
             if key not in ct_cache:
                 exists = (
                     db.query(ClassTeacher)
                     .filter_by(
                         class_id=sc.id,
                         teacher_id=teacher.id,
+                        academic_year_id=academic_year_id,
                         role=ClassTeacherRole.regular,
                     )
                     .first()
@@ -124,6 +151,7 @@ def _handle_row(
                         ClassTeacher(
                             class_id=sc.id,
                             teacher_id=teacher.id,
+                            academic_year_id=academic_year_id,
                             role=ClassTeacherRole.regular,
                         )
                     )
@@ -132,11 +160,15 @@ def _handle_row(
 
         for label in homeroom_classes:
             sc = class_cache[label]
-            key = (sc.id, teacher.id, "homeroom")
+            key = (sc.id, teacher.id, academic_year_id, "homeroom")
             if key not in ct_cache:
                 existing_homeroom = (
                     db.query(ClassTeacher)
-                    .filter_by(class_id=sc.id, role=ClassTeacherRole.homeroom)
+                    .filter_by(
+                        class_id=sc.id,
+                        role=ClassTeacherRole.homeroom,
+                        academic_year_id=academic_year_id,
+                    )
                     .first()
                 )
                 if existing_homeroom and existing_homeroom.teacher_id != teacher.id:
@@ -146,6 +178,7 @@ def _handle_row(
                     .filter_by(
                         class_id=sc.id,
                         teacher_id=teacher.id,
+                        academic_year_id=academic_year_id,
                         role=ClassTeacherRole.homeroom,
                     )
                     .first()
@@ -155,6 +188,7 @@ def _handle_row(
                         ClassTeacher(
                             class_id=sc.id,
                             teacher_id=teacher.id,
+                            academic_year_id=academic_year_id,
                             role=ClassTeacherRole.homeroom,
                         )
                     )
@@ -172,20 +206,65 @@ def import_teachers_from_file(
     *,
     dry_run: bool = False,
     truncate_associations: bool = False,
-    school_id: int = 1,
 ) -> ImportReport:
+    header_df = pd.read_excel(path, sheet_name="Справочник педагоги", nrows=2, header=None)
+    year_line = str(header_df.iloc[0, 0])
+    school_name = str(header_df.iloc[1, 0]).strip()
+    m = re.search(r"(\d{4})/(\d{4})", year_line)
+    if not m:
+        raise ValueError("invalid academic year")
+    start_year = int(m.group(1))
+    end_year = int(m.group(2))
+    year_name = f"{start_year}/{end_year}"
+
+    academic_year = db.query(AcademicYear).filter_by(name=year_name).first()
+    if academic_year is None:
+        academic_year = AcademicYear(
+            name=year_name,
+            year_start=date(start_year, 9, 1),
+            year_end=date(end_year, 8, 31),
+        )
+        db.add(academic_year)
+        db.flush()
+
+    school = db.query(School).filter_by(full_name=school_name).first()
+    if school is None:
+        raise ValueError("school not found")
+
     df = pd.read_excel(path, sheet_name="Справочник педагоги", header=2).ffill()
     report = ImportReport()
     caches: dict = {}
 
-    if truncate_associations:
-        db.query(ClassTeacher).delete()
-        db.query(TeacherSubject).delete()
+    class_ids = [
+        cid for (cid,) in db.query(Class.id).filter_by(
+            school_id=school.id,
+            academic_year_id=academic_year.id,
+        ).all()
+    ]
+    if class_ids:
+        db.query(ClassTeacher).filter(
+            ClassTeacher.class_id.in_(class_ids),
+            ClassTeacher.academic_year_id == academic_year.id,
+        ).delete(synchronize_session=False)
+
+    teacher_ids = [tid for (tid,) in db.query(Teacher.id).filter_by(school_id=school.id).all()]
+    if teacher_ids:
+        db.query(TeacherSubject).filter(
+            TeacherSubject.teacher_id.in_(teacher_ids),
+            TeacherSubject.academic_year_id == academic_year.id,
+        ).delete(synchronize_session=False)
 
     for start in range(0, len(df), 500):
         chunk = df.iloc[start : start + 500]
         for _, row in chunk.iterrows():
-            errors = _handle_row(row, db, caches, report, school_id)
+            errors = _handle_row(
+                row,
+                db,
+                caches,
+                report,
+                school.id,
+                academic_year.id,
+            )
             if errors:
                 db.rollback()
                 raise ValueError(errors[0].error)
