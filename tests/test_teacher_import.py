@@ -179,3 +179,43 @@ def test_homeroom_conflict(tmp_path):
             assert False, 'conflict not raised'
         session.close()
 
+
+def test_homeroom_conflict_same_file(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare_school(session)
+
+        df = pd.DataFrame(
+            [
+                {
+                    'ФИО педагога': 'One',
+                    'Классный руководитель': '1G',
+                    'Предмет': 'Math',
+                    'Класс': '1G',
+                },
+                {
+                    'ФИО педагога': 'Two',
+                    'Классный руководитель': '1G',
+                    'Предмет': 'Other',
+                    'Класс': '1G',
+                },
+            ]
+        )
+        file = tmp_path / 'conflict_same_file.xlsx'
+        with pd.ExcelWriter(file, engine="openpyxl") as writer:
+            df.to_excel(writer, sheet_name='Справочник педагоги', index=False, startrow=2)
+            ws = writer.sheets['Справочник педагоги']
+            ws.cell(row=1, column=1, value='Педагоги 2024/2025')
+            ws.cell(row=2, column=1, value='Test School')
+
+        try:
+            import_teachers_from_file(str(file), session)
+        except ValueError:
+            pass
+        else:
+            assert False, 'conflict not raised'
+        session.close()
+
