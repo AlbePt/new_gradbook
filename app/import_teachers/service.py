@@ -73,6 +73,7 @@ def _handle_row(
             if teacher is None:
                 teacher = Teacher(full_name=teacher_name, school_id=school_id)
                 db.add(teacher)
+                db.flush([teacher])
                 report.teachers_created += 1
             teacher_cache[teacher_name] = teacher
 
@@ -86,6 +87,7 @@ def _handle_row(
             if subject is None:
                 subject = Subject(name=subject_name, school_id=school_id)
                 db.add(subject)
+                db.flush([subject])
                 report.subjects_created += 1
             subject_cache[subject_name] = subject
 
@@ -130,6 +132,7 @@ def _handle_row(
                         academic_year_id=academic_year_id,
                     )
                     db.add(school_class)
+                    db.flush([school_class])
                     report.classes_created += 1
                 class_cache[label] = school_class
 
