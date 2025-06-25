@@ -56,6 +56,9 @@ def _handle_row(
         homeroom_classes = _parse_list(row["Классный руководитель"])
         subject_name = str(row["Предмет"]).strip()
         regular_classes = _parse_list(row["Класс"])
+        # if a teacher is homeroom for a class, we don't create an additional
+        # regular association for the same class
+        regular_classes = [c for c in regular_classes if c not in homeroom_classes]
 
         teacher_cache = caches.setdefault("teachers", {})
         subject_cache = caches.setdefault("subjects", {})
