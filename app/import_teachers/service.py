@@ -241,7 +241,9 @@ def import_teachers_from_file(
     if school is None:
         raise ValueError("school not found")
 
-    df = pd.read_excel(path, sheet_name="Справочник педагоги", header=2).ffill()
+    df = pd.read_excel(path, sheet_name="Справочник педагоги", header=2)
+    # only teacher names may span multiple rows, do not forward fill other columns
+    df["ФИО педагога"] = df["ФИО педагога"].ffill()
     report = ImportReport()
     caches: dict = {}
 
