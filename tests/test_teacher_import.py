@@ -27,6 +27,7 @@ from models import (
     Class,
     ClassTeacher,
     ClassTeacherRole,
+    ClassTeacherRoleAssociation,
     Region,
     School,
     Subject,
@@ -106,7 +107,7 @@ def test_import_happy_path(tmp_path):
 
         teachers = session.query(Teacher).all()
         assert len(teachers) == 2
-        assert session.query(ClassTeacher).filter_by(role=ClassTeacherRole.homeroom).count() == 1
+        assert session.query(ClassTeacherRoleAssociation).filter_by(role=ClassTeacherRole.homeroom).count() == 1
         assert session.query(AcademicYear).filter_by(name='2024/2025').count() == 1
         session.close()
 

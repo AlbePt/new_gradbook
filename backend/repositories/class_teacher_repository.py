@@ -1,7 +1,7 @@
 # backend/repositories/class_teacher_repository.py
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from models.class_ import ClassTeacher, ClassTeacherRole
+from models.class_ import ClassTeacher, ClassTeacherRole, ClassTeacherRoleAssociation
 from schemas.class_teacher import ClassTeacherCreate
 
 
@@ -37,26 +37,48 @@ class ClassTeacherRepository:
 
         # Check for existing record with the same primary key
         db_ct = self.get(ct.class_id, ct.teacher_id, ct.academic_year_id)
-        if db_ct:
-            return db_ct
+        if db_ct is None:
+            db_ct = ClassTeacher(
+                class_id=ct.class_id,
+                teacher_id=ct.teacher_id,
+                academic_year_id=ct.academic_year_id,
+            )
+            self.db.add(db_ct)
 
         if ct.role == ClassTeacherRole.homeroom:
             conflict = (
-                self.db.query(ClassTeacher)
+                self.db.query(ClassTeacherRoleAssociation)
                 .filter(
-                    ClassTeacher.class_id == ct.class_id,
-                    ClassTeacher.academic_year_id == ct.academic_year_id,
-                    ClassTeacher.role == ClassTeacherRole.homeroom,
+                    ClassTeacherRoleAssociation.class_id == ct.class_id,
+                    ClassTeacherRoleAssociation.academic_year_id == ct.academic_year_id,
+                    ClassTeacherRoleAssociation.role == ClassTeacherRole.homeroom,
                 )
                 .first()
             )
             if conflict and conflict.teacher_id != ct.teacher_id:
                 raise ValueError("homeroom already assigned")
-            if conflict:
-                return conflict
 
-        db_ct = ClassTeacher(**ct.dict())
-        self.db.add(db_ct)
+        exists_role = (
+            self.db.query(ClassTeacherRoleAssociation)
+            .filter(
+                ClassTeacherRoleAssociation.class_id == ct.class_id,
+                ClassTeacherRoleAssociation.teacher_id == ct.teacher_id,
+                ClassTeacherRoleAssociation.academic_year_id == ct.academic_year_id,
+                ClassTeacherRoleAssociation.role == ct.role,
+            )
+            .first()
+        )
+        if exists_role:
+            return db_ct
+
+        self.db.add(
+            ClassTeacherRoleAssociation(
+                class_id=ct.class_id,
+                teacher_id=ct.teacher_id,
+                academic_year_id=ct.academic_year_id,
+                role=ct.role,
+            )
+        )
         try:
             self.db.commit()
         except IntegrityError:
@@ -70,5 +92,14 @@ class ClassTeacherRepository:
     ) -> None:
         db_ct = self.get(class_id, teacher_id, academic_year_id)
         if db_ct:
+            (
+                self.db.query(ClassTeacherRoleAssociation)
+                .filter(
+                    ClassTeacherRoleAssociation.class_id == class_id,
+                    ClassTeacherRoleAssociation.teacher_id == teacher_id,
+                    ClassTeacherRoleAssociation.academic_year_id == academic_year_id,
+                )
+                .delete()
+            )
             self.db.delete(db_ct)
             self.db.commit()

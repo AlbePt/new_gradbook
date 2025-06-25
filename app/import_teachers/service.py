@@ -15,6 +15,7 @@ from models import (
     Class,
     ClassTeacher,
     ClassTeacherRole,
+    ClassTeacherRoleAssociation,
     School,
     Subject,
     Teacher,
@@ -145,7 +146,7 @@ def _handle_row(
             key = (sc.id, teacher.id, academic_year_id, "regular")
             if key not in ct_cache:
                 exists = (
-                    db.query(ClassTeacher)
+                    db.query(ClassTeacherRoleAssociation)
                     .filter_by(
                         class_id=sc.id,
                         teacher_id=teacher.id,
@@ -155,8 +156,25 @@ def _handle_row(
                     .first()
                 )
                 if not exists:
+                    ct = (
+                        db.query(ClassTeacher)
+                        .filter_by(
+                            class_id=sc.id,
+                            teacher_id=teacher.id,
+                            academic_year_id=academic_year_id,
+                        )
+                        .first()
+                    )
+                    if ct is None:
+                        ct = ClassTeacher(
+                            class_id=sc.id,
+                            teacher_id=teacher.id,
+                            academic_year_id=academic_year_id,
+                        )
+                        db.add(ct)
+                        db.flush([ct])
                     db.add(
-                        ClassTeacher(
+                        ClassTeacherRoleAssociation(
                             class_id=sc.id,
                             teacher_id=teacher.id,
                             academic_year_id=academic_year_id,
@@ -172,7 +190,7 @@ def _handle_row(
             key = (sc.id, teacher.id, academic_year_id, "homeroom")
             if key not in ct_cache:
                 existing_homeroom = (
-                    db.query(ClassTeacher)
+                    db.query(ClassTeacherRoleAssociation)
                     .filter_by(
                         class_id=sc.id,
                         role=ClassTeacherRole.homeroom,
@@ -183,7 +201,7 @@ def _handle_row(
                 if existing_homeroom and existing_homeroom.teacher_id != teacher.id:
                     return [ImportError(row=int(row.name), error="homeroom conflict")]
                 exists = (
-                    db.query(ClassTeacher)
+                    db.query(ClassTeacherRoleAssociation)
                     .filter_by(
                         class_id=sc.id,
                         teacher_id=teacher.id,
@@ -193,8 +211,25 @@ def _handle_row(
                     .first()
                 )
                 if not exists:
+                    ct = (
+                        db.query(ClassTeacher)
+                        .filter_by(
+                            class_id=sc.id,
+                            teacher_id=teacher.id,
+                            academic_year_id=academic_year_id,
+                        )
+                        .first()
+                    )
+                    if ct is None:
+                        ct = ClassTeacher(
+                            class_id=sc.id,
+                            teacher_id=teacher.id,
+                            academic_year_id=academic_year_id,
+                        )
+                        db.add(ct)
+                        db.flush([ct])
                     db.add(
-                        ClassTeacher(
+                        ClassTeacherRoleAssociation(
                             class_id=sc.id,
                             teacher_id=teacher.id,
                             academic_year_id=academic_year_id,

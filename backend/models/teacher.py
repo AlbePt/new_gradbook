@@ -1,6 +1,7 @@
 # backend/models/teacher.py
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
+from .class_ import ClassTeacherRoleAssociation
 from core.db import Base
 
 class Teacher(Base):
@@ -25,8 +26,8 @@ class Teacher(Base):
     class_teachers = relationship('ClassTeacher', back_populates='teacher', cascade='all, delete-orphan')
     homeroom_classes = relationship(
         'Class',
-        secondary='class_teachers',
-        primaryjoin="and_(Teacher.id==ClassTeacher.teacher_id, ClassTeacher.role=='homeroom')",
-        secondaryjoin="Class.id==ClassTeacher.class_id",
+        secondary='class_teacher_roles',
+        primaryjoin="and_(Teacher.id==ClassTeacherRoleAssociation.teacher_id, ClassTeacherRoleAssociation.role=='homeroom')",
+        secondaryjoin="Class.id==ClassTeacherRoleAssociation.class_id",
         viewonly=True,
     )
