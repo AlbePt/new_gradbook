@@ -26,12 +26,20 @@ def upgrade() -> None:
         sa.Column('role', sa.String(length=20), nullable=False),
         sa.ForeignKeyConstraint(
             ['class_id', 'teacher_id', 'academic_year_id'],
-            ['class_teachers.class_id', 'class_teachers.teacher_id', 'class_teachers.academic_year_id'],
+            ['class_teachers.class_id',
+             'class_teachers.teacher_id',
+             'class_teachers.academic_year_id'],
             ondelete='CASCADE',
         ),
-        sa.PrimaryKeyConstraint('class_id', 'teacher_id', 'academic_year_id', 'role')
+        sa.PrimaryKeyConstraint('class_id', 'teacher_id',
+                                'academic_year_id', 'role'),
     )
 
+    # ⚠️  CНАЧАЛА убрать индекс со старой таблицы
+    op.drop_index('uq_one_homeroom_per_class',
+                  table_name='class_teachers')
+
+    # затем создать новый на новой таблице
     op.create_index(
         'uq_one_homeroom_per_class',
         'class_teacher_roles',
@@ -40,13 +48,15 @@ def upgrade() -> None:
         postgresql_where=sa.text("role = 'homeroom'"),
     )
 
-    op.execute(
-        "INSERT INTO class_teacher_roles(class_id, teacher_id, academic_year_id, role) "
-        "SELECT class_id, teacher_id, academic_year_id, role FROM class_teachers"
-    )
+    op.execute("""
+        INSERT INTO class_teacher_roles(class_id, teacher_id,
+                                        academic_year_id, role)
+        SELECT class_id, teacher_id, academic_year_id, role
+        FROM class_teachers
+    """)
 
-    op.drop_index('uq_one_homeroom_per_class', table_name='class_teachers')
-    op.drop_constraint('chk_class_teacher_role', 'class_teachers', type_='check')
+    op.drop_constraint('chk_class_teacher_role',
+                       'class_teachers', type_='check')
     op.drop_column('class_teachers', 'role')
 
 
