@@ -1,6 +1,6 @@
 # backend/models/class_.py
 import enum
-from sqlalchemy import Column, Integer, String, ForeignKey, Table, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, Enum, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from core.db import Base
@@ -24,21 +24,29 @@ class ClassTeacher(Base):
 
     class_id = Column(Integer, ForeignKey('classes.id', ondelete='CASCADE'), primary_key=True)
     teacher_id = Column(Integer, ForeignKey('teachers.id', ondelete='CASCADE'), primary_key=True)
+    academic_year_id = Column(Integer, ForeignKey('academic_years.id', ondelete='CASCADE'), primary_key=True)
     role = Column(Enum(ClassTeacherRole), nullable=False)
 
     school_class = relationship('Class', back_populates='class_teachers')
     teacher = relationship('Teacher', back_populates='class_teachers')
+    academic_year = relationship('AcademicYear', back_populates='class_teachers')
 
 
 class Class(Base):
     __tablename__ = 'classes'
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(10), unique=True, nullable=False)
+    name = Column(String(10), nullable=False)
     school_id = Column(Integer, ForeignKey('schools.id', ondelete='CASCADE'), nullable=False)
+    academic_year_id = Column(Integer, ForeignKey('academic_years.id', ondelete='CASCADE'), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('name', 'school_id', 'academic_year_id'),
+    )
 
     # Relationships
     school = relationship('School', back_populates='classes')
+    academic_year = relationship('AcademicYear', back_populates='classes')
     students = relationship('Student', back_populates='school_class', cascade='all, delete-orphan')
     subjects = relationship('Subject', secondary=class_subjects, back_populates='classes')
     teachers = relationship('Teacher', secondary='class_teachers', back_populates='classes')

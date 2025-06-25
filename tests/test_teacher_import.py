@@ -32,6 +32,7 @@ from models import (
     Subject,
     Teacher,
     TeacherSubject,
+    AcademicYear,
 )
 
 
@@ -44,7 +45,7 @@ def run_migrations(url: str) -> None:
 def prepare_school(session):
     region = Region(name='R')
     city = City(name='C', region=region)
-    school = School(name='S', city=city)
+    school = School(name='S', full_name='Test School', city=city)
     session.add_all([region, city, school])
     session.commit()
     return school.id
@@ -79,8 +80,11 @@ def make_excel(path: Path) -> None:
             },
         ]
     )
-    with pd.ExcelWriter(path) as writer:
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name='Справочник педагоги', index=False, startrow=2)
+        ws = writer.sheets['Справочник педагоги']
+        ws.cell(row=1, column=1, value='Педагоги 2024/2025')
+        ws.cell(row=2, column=1, value='Test School')
 
 
 def test_import_happy_path(tmp_path):
@@ -103,6 +107,7 @@ def test_import_happy_path(tmp_path):
         teachers = session.query(Teacher).all()
         assert len(teachers) == 2
         assert session.query(ClassTeacher).filter_by(role=ClassTeacherRole.homeroom).count() == 1
+        assert session.query(AcademicYear).filter_by(name='2024/2025').count() == 1
         session.close()
 
 
@@ -161,8 +166,11 @@ def test_homeroom_conflict(tmp_path):
             ]
         )
         file2 = tmp_path / 'conflict.xlsx'
-        with pd.ExcelWriter(file2) as writer:
+        with pd.ExcelWriter(file2, engine="openpyxl") as writer:
             df.to_excel(writer, sheet_name='Справочник педагоги', index=False, startrow=2)
+            ws = writer.sheets['Справочник педагоги']
+            ws.cell(row=1, column=1, value='Педагоги 2024/2025')
+            ws.cell(row=2, column=1, value='Test School')
         try:
             import_teachers_from_file(str(file2), session)
         except ValueError:
