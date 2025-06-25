@@ -1,6 +1,7 @@
 # backend/repositories/class_teacher_repository.py
 from sqlalchemy.orm import Session
-from models.class_ import ClassTeacher
+from sqlalchemy.exc import IntegrityError
+from models.class_ import ClassTeacher, ClassTeacherRole
 from schemas.class_teacher import ClassTeacherCreate
 
 
@@ -27,19 +28,46 @@ class ClassTeacherRepository:
         return self.db.query(ClassTeacher).offset(skip).limit(limit).all()
 
     def create(self, ct: ClassTeacherCreate) -> ClassTeacher:
-        """Create a relation if it doesn't exist."""
+        """Create a relation if it doesn't exist.
 
+        Additionally ensures only one homeroom teacher exists per class and
+        academic year. If another homeroom teacher is already assigned, a
+        ``ValueError`` is raised.
+        """
+
+        # Check for existing record with the same primary key
         db_ct = self.get(ct.class_id, ct.teacher_id, ct.academic_year_id)
         if db_ct:
             return db_ct
 
+        if ct.role == ClassTeacherRole.homeroom:
+            conflict = (
+                self.db.query(ClassTeacher)
+                .filter(
+                    ClassTeacher.class_id == ct.class_id,
+                    ClassTeacher.academic_year_id == ct.academic_year_id,
+                    ClassTeacher.role == ClassTeacherRole.homeroom,
+                )
+                .first()
+            )
+            if conflict and conflict.teacher_id != ct.teacher_id:
+                raise ValueError("homeroom already assigned")
+            if conflict:
+                return conflict
+
         db_ct = ClassTeacher(**ct.dict())
         self.db.add(db_ct)
-        self.db.commit()
+        try:
+            self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            raise
         self.db.refresh(db_ct)
         return db_ct
 
-    def delete(self, class_id: int, teacher_id: int, academic_year_id: int) -> None:
+    def delete(
+        self, class_id: int, teacher_id: int, academic_year_id: int
+    ) -> None:
         db_ct = self.get(class_id, teacher_id, academic_year_id)
         if db_ct:
             self.db.delete(db_ct)
