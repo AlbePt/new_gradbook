@@ -31,6 +31,9 @@ class ImportReport(BaseModel):
     classes_created: int = 0
     teacher_subjects_created: int = 0
     class_teachers_created: int = 0
+    teachers_deleted: int = 0
+    ts_deleted: int = 0
+    ct_deleted: int = 0
 
 
 class ImportError(BaseModel):
@@ -67,6 +70,10 @@ def _handle_row(
         class_cache = caches.setdefault("classes", {})
         ts_cache = caches.setdefault("teacher_subjects", set())
         ct_cache = caches.setdefault("class_teachers", set())
+        ts_seen = caches.setdefault("ts_seen", set())
+        ct_seen = caches.setdefault("ct_seen", set())
+        teachers_seen = caches.setdefault("teachers_seen", set())
+        classes_seen = caches.setdefault("classes_seen", set())
 
         teacher = teacher_cache.get(teacher_name)
         if teacher is None:
@@ -81,6 +88,7 @@ def _handle_row(
                 db.flush([teacher])
                 report.teachers_created += 1
             teacher_cache[teacher_name] = teacher
+        teachers_seen.add(teacher_name)
 
         subject = subject_cache.get(subject_name)
         if subject is None:
@@ -117,6 +125,7 @@ def _handle_row(
                 db.flush()
                 report.teacher_subjects_created += 1
             ts_cache.add((teacher_name, subject_name, academic_year_id))
+        ts_seen.add((teacher_name, subject_name))
 
         all_labels = set(homeroom_classes + regular_classes)
         for label in all_labels:
@@ -141,6 +150,7 @@ def _handle_row(
                     db.flush([school_class])
                     report.classes_created += 1
                 class_cache[label] = school_class
+            classes_seen.add(label)
 
         for label in regular_classes:
             sc = class_cache[label]
@@ -185,6 +195,7 @@ def _handle_row(
                     db.flush()
                     report.class_teachers_created += 1
                 ct_cache.add(key)
+            ct_seen.add((sc.name, teacher_name))
 
         for label in homeroom_classes:
             sc = class_cache[label]
@@ -240,6 +251,7 @@ def _handle_row(
                     db.flush()
                     report.class_teachers_created += 1
                 ct_cache.add(key)
+            ct_seen.add((sc.name, teacher_name))
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("row processing error", row=int(row.name))
         return [ImportError(row=int(row.name), error=str(exc))]
@@ -281,6 +293,11 @@ def import_teachers_from_file(
     df = pd.read_excel(path, sheet_name="Справочник педагоги", header=2)
     # only teacher names may span multiple rows, do not forward fill other columns
     df["ФИО педагога"] = df["ФИО педагога"].ffill()
+    teachers_in_file = set(df["ФИО педагога"].dropna().map(str.strip))
+    classes_in_file: set[str] = set()
+    for _, r in df.iterrows():
+        classes_in_file.update(_parse_list(r.get("Класс", None)))
+        classes_in_file.update(_parse_list(r.get("Классный руководитель", None)))
     report = ImportReport()
     caches: dict = {}
 
@@ -321,6 +338,73 @@ def import_teachers_from_file(
             if errors:
                 db.rollback()
                 raise ValueError(errors[0].error)
+
+    # deletion of entities not present in the new file
+    teachers_seen = caches.get("teachers_seen", set())
+    ts_seen = caches.get("ts_seen", set())
+    ct_seen = caches.get("ct_seen", set())
+    classes_seen = caches.get("classes_seen", set())
+
+    # remove teacher subjects
+    existing_ts = (
+        db.query(TeacherSubject)
+        .join(Teacher)
+        .join(Subject)
+        .filter(Teacher.school_id == school.id)
+        .filter(TeacherSubject.academic_year_id == academic_year.id)
+        .all()
+    )
+    for ts in existing_ts:
+        key = (ts.teacher.full_name, ts.subject.name)
+        if key not in ts_seen:
+            report.ts_deleted += 1
+            if not dry_run:
+                db.delete(ts)
+
+    # remove class teachers
+    existing_ct = (
+        db.query(ClassTeacher)
+        .join(Class)
+        .join(Teacher)
+        .filter(Class.school_id == school.id)
+        .filter(ClassTeacher.academic_year_id == academic_year.id)
+        .all()
+    )
+    for ct in existing_ct:
+        pair = (ct.school_class.name, ct.teacher.full_name)
+        if pair not in ct_seen:
+            report.ct_deleted += 1
+            if not dry_run:
+                db.delete(ct)
+
+    # remove teachers not present
+    if teachers_in_file:
+        to_delete = (
+            db.query(Teacher)
+            .filter(Teacher.school_id == school.id)
+            .filter(~Teacher.full_name.in_(teachers_in_file))
+            .all()
+        )
+    else:
+        to_delete = db.query(Teacher).filter_by(school_id=school.id).all()
+    for teacher in to_delete:
+        report.teachers_deleted += 1
+        if not dry_run:
+            db.delete(teacher)
+
+    # remove classes not present
+    existing_classes = (
+        db.query(Class)
+        .filter_by(school_id=school.id, academic_year_id=academic_year.id)
+        .all()
+    )
+    for cl in existing_classes:
+        if cl.name not in classes_seen:
+            if not dry_run and len(cl.students) == 0:
+                db.delete(cl)
+            else:
+                if not dry_run:
+                    cl.is_archived = True
 
     if dry_run:
         db.rollback()

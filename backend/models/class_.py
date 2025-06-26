@@ -11,6 +11,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Index,
     text,
+    Boolean,
 )
 from sqlalchemy.orm import relationship
 
@@ -82,6 +83,7 @@ class Class(Base):
     name = Column(String(10), nullable=False)
     school_id = Column(Integer, ForeignKey('schools.id', ondelete='CASCADE'), nullable=False)
     academic_year_id = Column(Integer, ForeignKey('academic_years.id', ondelete='CASCADE'), nullable=False)
+    is_archived = Column(Boolean, nullable=False, server_default='false')
 
     __table_args__ = (
         UniqueConstraint('name', 'school_id', 'academic_year_id'),
