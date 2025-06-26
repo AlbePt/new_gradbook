@@ -27,15 +27,25 @@ logger = structlog.get_logger(__name__)
 
 class ImportReport(BaseModel):
     teachers_created: int = 0
-    subjects_created: int = 0
-    classes_created: int = 0
-    teacher_subjects_created: int = 0
-    class_teachers_created: int = 0
-    teachersubjects_updated: int = 0
-    classteachers_updated: int = 0
+    teachers_updated: int = 0
     teachers_deleted: int = 0
-    ts_deleted: int = 0
-    ct_deleted: int = 0
+
+    subjects_created: int = 0
+    subjects_updated: int = 0
+    subjects_deleted: int = 0
+
+    classes_created: int = 0
+    classes_updated: int = 0
+    classes_deleted: int = 0
+
+    teacher_subjects_created: int = 0
+    teacher_subjects_updated: int = 0
+    teacher_subjects_deleted: int = 0
+
+    class_teachers_created: int = 0
+    class_teachers_updated: int = 0
+    class_teachers_deleted: int = 0
+
     homeroom_reassigned: int = 0
 
 
@@ -307,7 +317,7 @@ def import_teachers_from_file(
                     if unmatched:
                         ts_to_update = unmatched.pop(0)
                         ts_to_update.subject_id = sub_id
-                        report.teachersubjects_updated += 1
+                        report.teacher_subjects_updated += 1
                     else:
                         db.add(
                             TeacherSubject(
@@ -360,7 +370,7 @@ def import_teachers_from_file(
                     new_val = next(iter(new_roles))
                     if role_obj.role != new_val:
                         role_obj.role = new_val
-                        report.classteachers_updated += 1
+                        report.class_teachers_updated += 1
                 else:
                     for r in old_roles - new_roles:
                         db.delete(role_map[r])
@@ -373,7 +383,7 @@ def import_teachers_from_file(
                                 role=r,
                             )
                         )
-                    report.classteachers_updated += 1
+                    report.class_teachers_updated += 1
 
         # now add completely new pairs
         for pair, roles in ct_new.items():
@@ -418,7 +428,7 @@ def import_teachers_from_file(
     for ts in existing_ts:
         key = (ts.teacher.full_name, ts.subject.name)
         if key not in ts_seen:
-            report.ts_deleted += 1
+            report.teacher_subjects_deleted += 1
             if not dry_run:
                 db.delete(ts)
 
@@ -434,7 +444,7 @@ def import_teachers_from_file(
     for ct in existing_ct:
         pair = (ct.school_class.name, ct.teacher.full_name)
         if pair not in ct_seen:
-            report.ct_deleted += 1
+            report.class_teachers_deleted += 1
             if not dry_run:
                 db.delete(ct)
 
@@ -461,6 +471,7 @@ def import_teachers_from_file(
     )
     for cl in existing_classes:
         if cl.name not in classes_seen:
+            report.classes_deleted += 1
             if not dry_run and len(cl.students) == 0:
                 db.delete(cl)
             else:

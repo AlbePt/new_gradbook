@@ -321,8 +321,8 @@ def test_remove_subject_from_teacher(tmp_path):
         file2 = tmp_path / "teachers2.xlsx"
         make_excel_from_rows(file2, rows)
         report = import_teachers_from_file(str(file2), session)
-        assert report.ts_deleted == 2
-        assert report.ct_deleted == 2
+        assert report.teacher_subjects_deleted == 2
+        assert report.class_teachers_deleted == 2
         assert session.query(TeacherSubject).count() == 2
         assert session.query(ClassTeacher).count() == 2
         session.close()
@@ -404,8 +404,8 @@ def test_diff_update_noop(tmp_path):
         report = import_teachers_from_file(str(file), session)
         assert report.teacher_subjects_created == 0
         assert report.class_teachers_created == 0
-        assert report.teachersubjects_updated == 0
-        assert report.classteachers_updated == 0
+        assert report.teacher_subjects_updated == 0
+        assert report.class_teachers_updated == 0
         session.close()
 
 
@@ -429,7 +429,7 @@ def test_diff_update_change_role(tmp_path):
         session.commit()
 
         report = import_teachers_from_file(str(file), session)
-        assert report.classteachers_updated == 1
+        assert report.class_teachers_updated == 1
         assert (
             session.query(ClassTeacherRoleAssociation)
             .filter_by(role=ClassTeacherRole.homeroom)
@@ -479,7 +479,7 @@ def test_diff_update_change_subject(tmp_path):
         file2 = tmp_path / "teachers2.xlsx"
         make_excel_from_rows(file2, rows)
         report = import_teachers_from_file(str(file2), session)
-        assert report.teachersubjects_updated == 1
+        assert report.teacher_subjects_updated == 1
         assert session.query(TeacherSubject).count() == 4
         session.close()
 
@@ -580,3 +580,24 @@ def test_homeroom_reassign_ok(tmp_path):
         teacher = session.query(Teacher).filter_by(id=hr.teacher_id).one()
         assert teacher.full_name == "New HR"
         session.close()
+
+
+def test_cli_report_columns(tmp_path, capsys):
+    with testing.postgresql.Postgresql() as pg:
+        os.environ["DATABASE_URL"] = pg.url()
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare_school(session)
+        file = tmp_path / "teachers.xlsx"
+        make_excel(file)
+        session.close()
+
+        from app import cli
+
+        result = cli.main(["teachers-import", str(file)])
+        captured = capsys.readouterr().out.strip().splitlines()
+        assert result == 0
+        assert captured[0].startswith("Entity")
+        assert any(line.startswith("Teachers") for line in captured)
