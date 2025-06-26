@@ -284,25 +284,28 @@ def import_teachers_from_file(
     report = ImportReport()
     caches: dict = {}
 
-    class_ids = [
-        cid for (cid,) in db.query(Class.id).filter_by(
-            school_id=school.id,
-            academic_year_id=academic_year.id,
-        ).all()
-    ]
-    if class_ids:
-        db.query(ClassTeacher).filter(
-            ClassTeacher.class_id.in_(class_ids),
-            ClassTeacher.academic_year_id == academic_year.id,
-        ).delete(synchronize_session=False)
+    if truncate_associations:
+        class_ids = [
+            cid
+            for (cid,) in db.query(Class.id).filter_by(
+                school_id=school.id,
+                academic_year_id=academic_year.id,
+            ).all()
+        ]
+        if class_ids:
+            db.query(ClassTeacher).filter(
+                ClassTeacher.class_id.in_(class_ids),
+                ClassTeacher.academic_year_id == academic_year.id,
+            ).delete(synchronize_session=False)
 
-    teacher_ids = [tid for (tid,) in db.query(
-        Teacher.id).filter_by(school_id=school.id).all()]
-    if teacher_ids:
-        db.query(TeacherSubject).filter(
-            TeacherSubject.teacher_id.in_(teacher_ids),
-            TeacherSubject.academic_year_id == academic_year.id,
-        ).delete(synchronize_session=False)
+        teacher_ids = [
+            tid for (tid,) in db.query(Teacher.id).filter_by(school_id=school.id).all()
+        ]
+        if teacher_ids:
+            db.query(TeacherSubject).filter(
+                TeacherSubject.teacher_id.in_(teacher_ids),
+                TeacherSubject.academic_year_id == academic_year.id,
+            ).delete(synchronize_session=False)
 
     for start in range(0, len(df), 500):
         chunk = df.iloc[start: start + 500]

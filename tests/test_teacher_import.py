@@ -122,10 +122,29 @@ def test_reimport_no_duplicates(tmp_path):
         file = tmp_path / 'teachers.xlsx'
         make_excel(file)
 
+    import_teachers_from_file(str(file), session)
+    report = import_teachers_from_file(str(file), session)
+    assert report.teachers_created == 0
+    assert session.query(Teacher).count() == 2
+    assert session.query(TeacherSubject).count() == 4
+    session.close()
+
+
+def test_truncate_reimport(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        school_id = prepare_school(session)
+        file = tmp_path / 'teachers.xlsx'
+        make_excel(file)
+
         import_teachers_from_file(str(file), session)
-        report = import_teachers_from_file(str(file), session)
-        assert report.teachers_created == 0
-        assert session.query(Teacher).count() == 2
+        report = import_teachers_from_file(
+            str(file), session, truncate_associations=True
+        )
+        assert report.teacher_subjects_created == 4
         session.close()
 
 
