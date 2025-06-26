@@ -31,6 +31,8 @@ class ImportReport(BaseModel):
     classes_created: int = 0
     teacher_subjects_created: int = 0
     class_teachers_created: int = 0
+    teachersubjects_updated: int = 0
+    classteachers_updated: int = 0
     teachers_deleted: int = 0
     ts_deleted: int = 0
     ct_deleted: int = 0
@@ -68,10 +70,9 @@ def _handle_row(
         teacher_cache = caches.setdefault("teachers", {})
         subject_cache = caches.setdefault("subjects", {})
         class_cache = caches.setdefault("classes", {})
-        ts_cache = caches.setdefault("teacher_subjects", set())
-        ct_cache = caches.setdefault("class_teachers", set())
-        ts_seen = caches.setdefault("ts_seen", set())
-        ct_seen = caches.setdefault("ct_seen", set())
+        ts_new = caches.setdefault("ts_new", {})
+        ct_new = caches.setdefault("ct_new", {})
+        homeroom_map = caches.setdefault("file_homerooms", {})
         teachers_seen = caches.setdefault("teachers_seen", set())
         classes_seen = caches.setdefault("classes_seen", set())
 
@@ -104,28 +105,7 @@ def _handle_row(
                 report.subjects_created += 1
             subject_cache[subject_name] = subject
 
-        if (teacher_name, subject_name, academic_year_id) not in ts_cache:
-            exists = (
-                db.query(TeacherSubject)
-                .filter_by(
-                    teacher_id=teacher.id,
-                    subject_id=subject.id,
-                    academic_year_id=academic_year_id,
-                )
-                .first()
-            )
-            if not exists:
-                db.add(
-                    TeacherSubject(
-                        teacher=teacher,
-                        subject=subject,
-                        academic_year_id=academic_year_id,
-                    )
-                )
-                db.flush()
-                report.teacher_subjects_created += 1
-            ts_cache.add((teacher_name, subject_name, academic_year_id))
-        ts_seen.add((teacher_name, subject_name))
+        ts_new.setdefault(teacher.id, set()).add(subject.id)
 
         all_labels = set(homeroom_classes + regular_classes)
         for label in all_labels:
@@ -154,104 +134,17 @@ def _handle_row(
 
         for label in regular_classes:
             sc = class_cache[label]
-            key = (sc.id, teacher.id, academic_year_id, "regular")
-            if key not in ct_cache:
-                exists = (
-                    db.query(ClassTeacherRoleAssociation)
-                    .filter_by(
-                        class_id=sc.id,
-                        teacher_id=teacher.id,
-                        academic_year_id=academic_year_id,
-                        role=ClassTeacherRole.regular,
-                    )
-                    .first()
-                )
-                if not exists:
-                    ct = (
-                        db.query(ClassTeacher)
-                        .filter_by(
-                            class_id=sc.id,
-                            teacher_id=teacher.id,
-                            academic_year_id=academic_year_id,
-                        )
-                        .first()
-                    )
-                    if ct is None:
-                        ct = ClassTeacher(
-                            class_id=sc.id,
-                            teacher_id=teacher.id,
-                            academic_year_id=academic_year_id,
-                        )
-                        db.add(ct)
-                        db.flush([ct])
-                    db.add(
-                        ClassTeacherRoleAssociation(
-                            class_id=sc.id,
-                            teacher_id=teacher.id,
-                            academic_year_id=academic_year_id,
-                            role=ClassTeacherRole.regular,
-                        )
-                    )
-                    db.flush()
-                    report.class_teachers_created += 1
-                ct_cache.add(key)
-            ct_seen.add((sc.name, teacher_name))
+            ct_new.setdefault((sc.id, teacher.id), set()).add(ClassTeacherRole.regular)
+            classes_seen.add(label)
 
         for label in homeroom_classes:
             sc = class_cache[label]
-            key = (sc.id, teacher.id, academic_year_id, "homeroom")
-            if key not in ct_cache:
-                existing_homeroom = (
-                    db.query(ClassTeacherRoleAssociation)
-                    .filter_by(
-                        class_id=sc.id,
-                        role=ClassTeacherRole.homeroom,
-                        academic_year_id=academic_year_id,
-                    )
-                    .first()
-                )
-                if existing_homeroom and existing_homeroom.teacher_id != teacher.id:
-                    return [ImportError(row=int(row.name), error="homeroom conflict")]
-                exists = (
-                    db.query(ClassTeacherRoleAssociation)
-                    .filter_by(
-                        class_id=sc.id,
-                        teacher_id=teacher.id,
-                        academic_year_id=academic_year_id,
-                        role=ClassTeacherRole.homeroom,
-                    )
-                    .first()
-                )
-                if not exists:
-                    ct = (
-                        db.query(ClassTeacher)
-                        .filter_by(
-                            class_id=sc.id,
-                            teacher_id=teacher.id,
-                            academic_year_id=academic_year_id,
-                        )
-                        .first()
-                    )
-                    if ct is None:
-                        ct = ClassTeacher(
-                            class_id=sc.id,
-                            teacher_id=teacher.id,
-                            academic_year_id=academic_year_id,
-                        )
-                        db.add(ct)
-                        db.flush([ct])
-                    db.add(
-                        ClassTeacherRoleAssociation(
-                            class_id=sc.id,
-                            teacher_id=teacher.id,
-                            academic_year_id=academic_year_id,
-                            role=ClassTeacherRole.homeroom,
-                        )
-                    )
-                    db.flush()
-                    report.class_teachers_created += 1
-                ct_cache.add(key)
-            ct_seen.add((sc.name, teacher_name))
+            other = homeroom_map.get(sc.id)
+            if other is not None and other != teacher.id:
+                return [ImportError(row=int(row.name), error="homeroom conflict")]
+            homeroom_map[sc.id] = teacher.id
+            ct_new.setdefault((sc.id, teacher.id), set()).add(ClassTeacherRole.homeroom)
+            classes_seen.add(label)
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("row processing error", row=int(row.name))
         return [ImportError(row=int(row.name), error=str(exc))]
@@ -338,6 +231,132 @@ def import_teachers_from_file(
             if errors:
                 db.rollback()
                 raise ValueError(errors[0].error)
+
+    # diff update of associations when not truncating
+    if not truncate_associations:
+        teacher_cache: dict[str, Teacher] = caches.get("teachers", {})
+        subject_cache: dict[str, Subject] = caches.get("subjects", {})
+        class_cache: dict[str, Class] = caches.get("classes", {})
+        ts_new: dict[int, set[int]] = caches.get("ts_new", {})
+        ct_new: dict[tuple[int, int], set[ClassTeacherRole]] = caches.get("ct_new", {})
+
+        teacher_name_by_id = {t.id: name for name, t in teacher_cache.items()}
+        subject_name_by_id = {s.id: name for name, s in subject_cache.items()}
+        class_name_by_id = {c.id: name for name, c in class_cache.items()}
+
+        # existing teacher-subject relations for this year
+        existing_ts = (
+            db.query(TeacherSubject)
+            .join(Teacher)
+            .filter(Teacher.school_id == school.id)
+            .filter(TeacherSubject.academic_year_id == academic_year.id)
+            .all()
+        )
+        existing_ts_by_teacher: dict[int, list[TeacherSubject]] = {}
+        for ts in existing_ts:
+            existing_ts_by_teacher.setdefault(ts.teacher_id, []).append(ts)
+
+        ts_seen: set[tuple[str, str]] = set()
+
+        for teacher_id, subjects in ts_new.items():
+            old_list = existing_ts_by_teacher.get(teacher_id, []).copy()
+            old_map = {ts.subject_id: ts for ts in old_list}
+            unmatched = list(old_list)
+            for sub_id in subjects:
+                if sub_id in old_map:
+                    ts_seen.add((teacher_name_by_id[teacher_id], subject_name_by_id[sub_id]))
+                    unmatched.remove(old_map[sub_id])
+                else:
+                    if unmatched:
+                        ts_to_update = unmatched.pop(0)
+                        ts_to_update.subject_id = sub_id
+                        report.teachersubjects_updated += 1
+                    else:
+                        db.add(
+                            TeacherSubject(
+                                teacher_id=teacher_id,
+                                subject_id=sub_id,
+                                academic_year_id=academic_year.id,
+                            )
+                        )
+                        report.teacher_subjects_created += 1
+                    ts_seen.add((teacher_name_by_id[teacher_id], subject_name_by_id[sub_id]))
+
+        caches["ts_seen"] = ts_seen
+
+        # existing class-teacher relations
+        existing_ct = (
+            db.query(ClassTeacher)
+            .join(Class)
+            .join(Teacher)
+            .filter(Class.school_id == school.id)
+            .filter(ClassTeacher.academic_year_id == academic_year.id)
+            .all()
+        )
+        existing_ct_by_pair: dict[tuple[int, int], dict] = {}
+        for ct in existing_ct:
+            role_map = {r.role: r for r in ct.roles}
+            existing_ct_by_pair[(ct.class_id, ct.teacher_id)] = {"ct": ct, "roles": role_map}
+
+        ct_seen: set[tuple[str, str]] = set()
+
+        # first update/delete existing pairs
+        for pair, data in existing_ct_by_pair.items():
+            new_roles = ct_new.get(pair)
+            class_id, teacher_id = pair
+            role_map = data["roles"]
+            old_roles = set(role_map.keys())
+            if not new_roles:
+                # remove roles to avoid conflicts; ct will be deleted later
+                for r in role_map.values():
+                    db.delete(r)
+                continue
+            ct_seen.add((class_name_by_id[class_id], teacher_name_by_id[teacher_id]))
+            if new_roles != old_roles:
+                if len(old_roles) == 1 and len(new_roles) == 1:
+                    role_obj = next(iter(role_map.values()))
+                    new_val = next(iter(new_roles))
+                    if role_obj.role != new_val:
+                        role_obj.role = new_val
+                        report.classteachers_updated += 1
+                else:
+                    for r in old_roles - new_roles:
+                        db.delete(role_map[r])
+                    for r in new_roles - old_roles:
+                        db.add(
+                            ClassTeacherRoleAssociation(
+                                class_id=class_id,
+                                teacher_id=teacher_id,
+                                academic_year_id=academic_year.id,
+                                role=r,
+                            )
+                        )
+                    report.classteachers_updated += 1
+
+        # now add completely new pairs
+        for pair, roles in ct_new.items():
+            if pair in existing_ct_by_pair:
+                continue
+            class_id, teacher_id = pair
+            ct = ClassTeacher(
+                class_id=class_id,
+                teacher_id=teacher_id,
+                academic_year_id=academic_year.id,
+            )
+            db.add(ct)
+            for r in roles:
+                db.add(
+                    ClassTeacherRoleAssociation(
+                        class_id=class_id,
+                        teacher_id=teacher_id,
+                        academic_year_id=academic_year.id,
+                        role=r,
+                    )
+                )
+            report.class_teachers_created += len(roles)
+            ct_seen.add((class_name_by_id[class_id], teacher_name_by_id[teacher_id]))
+
+        caches["ct_seen"] = ct_seen
 
     # deletion of entities not present in the new file
     teachers_seen = caches.get("teachers_seen", set())

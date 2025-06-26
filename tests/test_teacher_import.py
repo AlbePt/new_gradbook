@@ -377,3 +377,108 @@ def test_dry_run_removals(tmp_path):
         assert session.query(Teacher).count() == 2
         session.close()
 
+
+def test_diff_update_noop(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare_school(session)
+        file = tmp_path / 'teachers.xlsx'
+        make_excel(file)
+        import_teachers_from_file(str(file), session)
+
+        report = import_teachers_from_file(str(file), session)
+        assert report.teacher_subjects_created == 0
+        assert report.class_teachers_created == 0
+        assert report.teachersubjects_updated == 0
+        assert report.classteachers_updated == 0
+        session.close()
+
+
+def test_diff_update_change_role(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare_school(session)
+        file = tmp_path / 'teachers.xlsx'
+        make_excel(file)
+        import_teachers_from_file(str(file), session)
+
+        assoc = session.query(ClassTeacherRoleAssociation).filter_by(role=ClassTeacherRole.homeroom).one()
+        assoc.role = ClassTeacherRole.assistant
+        session.commit()
+
+        report = import_teachers_from_file(str(file), session)
+        assert report.classteachers_updated == 1
+        assert session.query(ClassTeacherRoleAssociation).filter_by(role=ClassTeacherRole.homeroom).count() == 1
+        session.close()
+
+
+def test_diff_update_change_subject(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare_school(session)
+        file = tmp_path / 'teachers.xlsx'
+        make_excel(file)
+        import_teachers_from_file(str(file), session)
+
+        rows = [
+            {
+                'ФИО педагога': 'Teacher One',
+                'Классный руководитель': '',
+                'Предмет': 'History',
+                'Класс': '10A, 5A',
+            },
+            {
+                'ФИО педагога': None,
+                'Классный руководитель': '',
+                'Предмет': 'Language',
+                'Класс': '10A, 5A',
+            },
+            {
+                'ФИО педагога': 'Teacher Two',
+                'Классный руководитель': '1G',
+                'Предмет': 'Math',
+                'Класс': '1G, 4B',
+            },
+            {
+                'ФИО педагога': None,
+                'Классный руководитель': '',
+                'Предмет': 'Talks',
+                'Класс': '1G, 4B',
+            },
+        ]
+        file2 = tmp_path / 'teachers2.xlsx'
+        make_excel_from_rows(file2, rows)
+        report = import_teachers_from_file(str(file2), session)
+        assert report.teachersubjects_updated == 1
+        assert session.query(TeacherSubject).count() == 4
+        session.close()
+
+
+def test_truncate_flag_still_works(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare_school(session)
+        file = tmp_path / 'teachers.xlsx'
+        make_excel(file)
+        import_teachers_from_file(str(file), session)
+
+        assoc = session.query(ClassTeacherRoleAssociation).filter_by(role=ClassTeacherRole.homeroom).one()
+        assoc.role = ClassTeacherRole.assistant
+        session.commit()
+
+        report = import_teachers_from_file(str(file), session, truncate_associations=True)
+        assert report.teacher_subjects_created == 4
+        session.close()
+
