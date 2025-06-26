@@ -232,6 +232,10 @@ def import_teachers_from_file(
 
     for start in range(0, len(df), 500):
         chunk = df.iloc[start : start + 500]
+        chunk_len = len(chunk)
+        if chunk_len > 500:
+            logger.warning("chunk size exceeded", length=chunk_len)
+        assert chunk_len <= 500
         for _, row in chunk.iterrows():
             errors = _handle_row(
                 row,
