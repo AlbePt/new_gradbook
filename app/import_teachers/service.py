@@ -317,7 +317,12 @@ def import_teachers_from_file(
                     ts_seen.add(
                         (teacher_name_by_id[teacher_id], subject_name_by_id[sub_id])
                     )
-                    unmatched.remove(old_map[sub_id])
+                    try:
+                        unmatched.remove(old_map[sub_id])
+                    except ValueError:
+                        # old_map may contain an entry already popped from
+                        # unmatched when handling a previous subject
+                        pass
                 else:
                     if unmatched:
                         ts_to_update = unmatched.pop(0)
