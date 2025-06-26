@@ -22,6 +22,7 @@ This document summarizes the SQLAlchemy models used in the backend.
 - **Columns:**
   - `id` – primary key
   - `name` – school name
+  - `full_name` – optional official name
   - `city_id` – FK to `cities.id` (CASCADE)
 - **Relationships:** belongs to `City`, has `students`, `teachers`, `schedules`, `subjects` and `classes` (cascade delete-orphan).
 
@@ -31,7 +32,7 @@ This document summarizes the SQLAlchemy models used in the backend.
   - `id` – primary key
   - `year_start`, `year_end` – dates
   - `name` – textual label
-- **Relationships:** has many `schedules`, `grades` and `attendance_records` (cascade delete-orphan).
+- **Relationships:** has many `schedules`, `grades`, `attendance_records`, `classes`, `teacher_subjects` and `class_teachers` (cascade delete-orphan).
 
 ## Students
 - **Table:** `students`
@@ -67,6 +68,7 @@ This document summarizes the SQLAlchemy models used in the backend.
 - **Columns:**
   - `teacher_id` – PK & FK to `teachers.id` (CASCADE)
   - `subject_id` – PK & FK to `subjects.id` (CASCADE)
+  - `academic_year_id` – PK & FK to `academic_years.id` (CASCADE)
 - **Purpose:** association table between teachers and subjects.
 
 ## Parents
@@ -126,7 +128,15 @@ This document summarizes the SQLAlchemy models used in the backend.
   - `id` – primary key
   - `name` – unique
   - `school_id` – FK to `schools.id` (CASCADE)
+  - `academic_year_id` – FK to `academic_years.id` (CASCADE)
 - **Relationships:** has many `students`, many-to-many with `Subject` via `class_subjects` and with `Teacher` via `class_teachers`. `class_teachers` records determine homeroom, assistant or regular teachers.
+
+## ClassSubject
+- **Table:** `class_subjects`
+- **Columns:**
+  - `class_id` – PK & FK to `classes.id` (CASCADE)
+  - `subject_id` – PK & FK to `subjects.id` (CASCADE)
+- **Purpose:** association table between classes and subjects.
 
 ## ClassTeacher
 - **Table:** `class_teachers`
