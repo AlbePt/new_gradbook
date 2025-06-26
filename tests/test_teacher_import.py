@@ -31,6 +31,7 @@ from models import (
     Region,
     School,
     Subject,
+    Student,
     Teacher,
     TeacherSubject,
     AcademicYear,
@@ -81,6 +82,15 @@ def make_excel(path: Path) -> None:
             },
         ]
     )
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name='Справочник педагоги', index=False, startrow=2)
+        ws = writer.sheets['Справочник педагоги']
+        ws.cell(row=1, column=1, value='Педагоги 2024/2025')
+        ws.cell(row=2, column=1, value='Test School')
+
+
+def make_excel_from_rows(path: Path, rows: list[dict[str, str]]) -> None:
+    df = pd.DataFrame(rows)
     with pd.ExcelWriter(path, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name='Справочник педагоги', index=False, startrow=2)
         ws = writer.sheets['Справочник педагоги']
@@ -237,5 +247,133 @@ def test_homeroom_conflict_same_file(tmp_path):
             pass
         else:
             assert False, 'conflict not raised'
+        session.close()
+
+
+def test_remove_teacher(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare_school(session)
+        file = tmp_path / 'teachers.xlsx'
+        make_excel(file)
+        import_teachers_from_file(str(file), session)
+
+        rows = [
+            {
+                'ФИО педагога': 'Teacher Two',
+                'Классный руководитель': '1G',
+                'Предмет': 'Math',
+                'Класс': '1G, 4B',
+            },
+            {
+                'ФИО педагога': None,
+                'Классный руководитель': '',
+                'Предмет': 'Talks',
+                'Класс': '1G, 4B',
+            },
+        ]
+        file2 = tmp_path / 'teachers2.xlsx'
+        make_excel_from_rows(file2, rows)
+        report = import_teachers_from_file(str(file2), session)
+        assert report.teachers_deleted == 1
+        assert session.query(Teacher).filter_by(full_name='Teacher One').count() == 0
+        session.close()
+
+
+def test_remove_subject_from_teacher(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare_school(session)
+        file = tmp_path / 'teachers.xlsx'
+        make_excel(file)
+        import_teachers_from_file(str(file), session)
+
+        rows = [
+            {
+                'ФИО педагога': 'Teacher One',
+                'Классный руководитель': '',
+                'Предмет': 'Literature',
+                'Класс': '10A',
+            },
+            {
+                'ФИО педагога': 'Teacher Two',
+                'Классный руководитель': '1G',
+                'Предмет': 'Math',
+                'Класс': '1G',
+            },
+        ]
+        file2 = tmp_path / 'teachers2.xlsx'
+        make_excel_from_rows(file2, rows)
+        report = import_teachers_from_file(str(file2), session)
+        assert report.ts_deleted == 2
+        assert report.ct_deleted == 2
+        assert session.query(TeacherSubject).count() == 2
+        assert session.query(ClassTeacher).count() == 2
+        session.close()
+
+
+def test_remove_class_and_archive_when_linked(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        school_id = prepare_school(session)
+        file = tmp_path / 'teachers.xlsx'
+        make_excel(file)
+        import_teachers_from_file(str(file), session)
+        cls_1g = session.query(Class).filter_by(name='1G').one()
+        student = Student(full_name='Kid', class_name='1G', school_class=cls_1g, school_id=school_id)
+        session.add(student)
+        session.commit()
+
+        rows = [
+            {
+                'ФИО педагога': 'Teacher One',
+                'Классный руководитель': '',
+                'Предмет': 'Literature',
+                'Класс': '10A',
+            },
+        ]
+        file2 = tmp_path / 'teachers2.xlsx'
+        make_excel_from_rows(file2, rows)
+        report = import_teachers_from_file(str(file2), session)
+        assert session.query(Class).filter_by(name='5A').count() == 0
+        archived = session.query(Class).filter_by(name='1G').one()
+        assert archived.is_archived is True
+        assert session.query(Class).filter_by(name='4B').count() == 0
+        session.close()
+
+
+def test_dry_run_removals(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare_school(session)
+        file = tmp_path / 'teachers.xlsx'
+        make_excel(file)
+        import_teachers_from_file(str(file), session)
+
+        rows = [
+            {
+                'ФИО педагога': 'Teacher Two',
+                'Классный руководитель': '1G',
+                'Предмет': 'Math',
+                'Класс': '1G',
+            },
+        ]
+        file2 = tmp_path / 'teachers2.xlsx'
+        make_excel_from_rows(file2, rows)
+        report = import_teachers_from_file(str(file2), session, dry_run=True)
+        assert report.teachers_deleted == 1
+        assert session.query(Teacher).count() == 2
         session.close()
 

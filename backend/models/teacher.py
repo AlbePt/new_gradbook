@@ -1,5 +1,5 @@
 # backend/models/teacher.py
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from .class_ import ClassTeacherRoleAssociation
 from core.db import Base
@@ -11,6 +11,7 @@ class Teacher(Base):
     full_name = Column(String(50), nullable=False)
     contact_info = Column(String(100), nullable=True)
     school_id = Column(Integer, ForeignKey('schools.id', ondelete='CASCADE'), nullable=False)
+    is_active = Column(Boolean, nullable=False, server_default='true')
 
     # Отношения
     subjects = relationship('Subject', secondary='teacher_subjects', back_populates='teachers')
