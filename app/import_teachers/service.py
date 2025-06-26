@@ -257,7 +257,8 @@ def import_teachers_from_file(
                 c.class_id: c.teacher_id
                 for c in (
                     db.query(ClassTeacherRoleAssociation)
-                    .join(Class)
+                    .join(ClassTeacherRoleAssociation.class_teacher)
+                    .join(ClassTeacher.school_class)
                     .filter(Class.school_id == school.id)
                     .filter(
                         ClassTeacherRoleAssociation.academic_year_id == academic_year.id
