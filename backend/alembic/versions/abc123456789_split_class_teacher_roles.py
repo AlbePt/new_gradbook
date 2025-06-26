@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 revision: str = 'abc123456789'
-down_revision: Union[str, None] = '1e8d45aee0f1'
+down_revision: Union[str, None] = '3f9608b15ced'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -63,7 +63,8 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.add_column(
         'class_teachers',
-        sa.Column('role', sa.String(length=20), nullable=False, server_default='regular')
+        sa.Column('role', sa.String(length=20),
+                  nullable=False, server_default='regular')
     )
     op.create_check_constraint(
         'chk_class_teacher_role',
@@ -83,5 +84,6 @@ def downgrade() -> None:
         "SELECT class_id, teacher_id, academic_year_id, role FROM class_teacher_roles"
     )
 
-    op.drop_index('uq_one_homeroom_per_class', table_name='class_teacher_roles')
+    op.drop_index('uq_one_homeroom_per_class',
+                  table_name='class_teacher_roles')
     op.drop_table('class_teacher_roles')
