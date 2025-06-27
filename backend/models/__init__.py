@@ -12,6 +12,7 @@ from .schedule import Schedule
 from .school import School
 from .student import Student
 from .subject import Subject
+from .subject_alias import SubjectAlias
 from .teacher import Teacher
 from .teacher_subject import TeacherSubject
 from .user import RoleEnum, User
