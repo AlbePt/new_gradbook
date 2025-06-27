@@ -23,3 +23,8 @@ class Subject(Base):
         cascade='all, delete-orphan'
     )
     classes = relationship('Class', secondary='class_subjects', back_populates='subjects')
+    aliases = relationship(
+        'SubjectAlias',
+        back_populates='subject',
+        cascade='all, delete-orphan'
+    )

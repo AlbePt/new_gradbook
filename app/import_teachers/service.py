@@ -21,6 +21,7 @@ from models import (
     Teacher,
     TeacherSubject,
 )
+from backend.services import resolve_subject
 
 logger = structlog.get_logger(__name__)
 
@@ -103,11 +104,7 @@ def _handle_row(
 
         subject = subject_cache.get(subject_name)
         if subject is None:
-            subject = (
-                db.query(Subject)
-                .filter_by(name=subject_name, school_id=school_id)
-                .first()
-            )
+            subject = resolve_subject(db, subject_name)
             if subject is None:
                 subject = Subject(name=subject_name, school_id=school_id)
                 db.add(subject)

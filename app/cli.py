@@ -3,6 +3,7 @@ import argparse
 from typing import Any
 
 from app.import_teachers.service import ImportReport, import_teachers_from_file
+from app.import_aliases.service import import_aliases_from_file
 from backend.core.db import SessionLocal
 
 
@@ -41,6 +42,9 @@ def main(argv: list[str] | None = None) -> Any:
     imp.add_argument("--dry-run", action="store_true")
     imp.add_argument("--truncate-associations", action="store_true")
 
+    alias_p = sub.add_parser("import-aliases")
+    alias_p.add_argument("file")
+
     args = parser.parse_args(argv)
 
     if args.cmd == "teachers-import":
@@ -53,6 +57,16 @@ def main(argv: list[str] | None = None) -> Any:
                 truncate_associations=args.truncate_associations,
             )
             _print_report(report)
+        except Exception as exc:  # pylint: disable=broad-except
+            print(f"Error: {exc}")
+            return 1
+        finally:
+            db.close()
+    elif args.cmd == "import-aliases":
+        db = SessionLocal()
+        try:
+            count = import_aliases_from_file(args.file, db)
+            print(f"Imported {count} aliases")
         except Exception as exc:  # pylint: disable=broad-except
             print(f"Error: {exc}")
             return 1
