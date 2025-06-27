@@ -97,3 +97,4 @@ junitxml.xml
 /frontend/node_modules
 /frontend/dist
 псевдографика.txt
+schema.sql
