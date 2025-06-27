@@ -14,7 +14,7 @@ class GradeBase(BaseModel):
     term_type: TermTypeEnum
     term_index: int
     grade_kind: GradeKindEnum
-    lesson_event_id: int | None = None
+    lesson_event_id: int
 
 
 class GradeCreate(GradeBase):

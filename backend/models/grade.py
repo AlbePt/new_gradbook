@@ -33,7 +33,11 @@ class Grade(Base):
     term_type = Column(Enum(TermTypeEnum), nullable=False)
     term_index = Column(SmallInteger, nullable=False)
     grade_kind = Column(Enum(GradeKindEnum), nullable=False)
-    lesson_event_id = Column(Integer, nullable=True)
+    lesson_event_id = Column(
+        Integer,
+        ForeignKey("lesson_events.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     student_id = Column(
         Integer,
         ForeignKey("students.id", ondelete="CASCADE"),
@@ -60,6 +64,7 @@ class Grade(Base):
     teacher = relationship("Teacher", back_populates="grades")
     subject = relationship("Subject", back_populates="grades")
     academic_year = relationship("AcademicYear", back_populates="grades")
+    lesson_event = relationship("LessonEvent", back_populates="grades")
 
 
 Index(
