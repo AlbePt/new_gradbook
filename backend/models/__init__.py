@@ -15,3 +15,5 @@ from .subject import Subject
 from .teacher import Teacher
 from .teacher_subject import TeacherSubject
 from .user import RoleEnum, User
+
+from .exam import Exam, ExamKindEnum
