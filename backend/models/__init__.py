@@ -1,22 +1,16 @@
-from .region import Region
-from .city import City
-from .school import School
 from .academic_year import AcademicYear
-from .student import Student 
-from .teacher import Teacher  
-from .schedule import Schedule  
-from .grade import Grade  
-from .attendance import Attendance  
 from .administrator import Administrator
-from .grade import Grade
+from .attendance import Attendance
+from .city import City
+from .class_ import (Class, ClassTeacher, ClassTeacherRole,
+                     ClassTeacherRoleAssociation, class_subjects)
+from .grade import Grade, GradeKindEnum, TermTypeEnum
 from .parent import Parent
+from .region import Region
+from .schedule import Schedule
+from .school import School
+from .student import Student
 from .subject import Subject
+from .teacher import Teacher
 from .teacher_subject import TeacherSubject
-from .class_ import (
-    Class,
-    class_subjects,
-    ClassTeacher,
-    ClassTeacherRole,
-    ClassTeacherRoleAssociation,
-)
-from .user import User, RoleEnum
+from .user import RoleEnum, User
