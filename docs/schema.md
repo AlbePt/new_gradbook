@@ -109,7 +109,9 @@ This document summarizes the SQLAlchemy models used in the backend.
 - **Columns:**
   - `id` – primary key
   - `date`
-  - `is_present`
+  - `status` (present/absent/sick/late/excused)
+  - `minutes_late`
+  - `comment`
   - `student_id` – FK to `students.id` (CASCADE)
   - `academic_year_id` – FK to `academic_years.id` (CASCADE)
 - **Relationships:** belongs to `Student` and `AcademicYear`.

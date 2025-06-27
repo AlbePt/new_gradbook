@@ -1,10 +1,13 @@
 # backend/schemas/attendance.py
 from pydantic import BaseModel
 from datetime import date
+from models.attendance import AttendanceStatusEnum
 
 class AttendanceBase(BaseModel):
     date: date
-    is_present: bool
+    status: AttendanceStatusEnum
+    minutes_late: int | None = None
+    comment: str | None = None
     student_id: int
 
 class AttendanceCreate(AttendanceBase):

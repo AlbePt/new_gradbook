@@ -1,6 +1,6 @@
 from .academic_year import AcademicYear
 from .administrator import Administrator
-from .attendance import Attendance
+from .attendance import Attendance, AttendanceStatusEnum
 from .city import City
 from .class_ import (Class, ClassTeacher, ClassTeacherRole,
                      ClassTeacherRoleAssociation, class_subjects)
