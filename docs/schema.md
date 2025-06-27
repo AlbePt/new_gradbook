@@ -53,6 +53,7 @@ This document summarizes the SQLAlchemy models used in the backend.
   - `full_name`
   - `contact_info`
   - `school_id` – FK to `schools.id` (CASCADE)
+  - `is_active` – boolean flag, defaults to true
 - **Relationships:** many-to-many with `Subject` via `teacher_subjects`. Has `grades`, `schedules`, `classes` and `class_teachers` (cascade delete-orphan).
 
 ## Subjects
@@ -129,6 +130,7 @@ This document summarizes the SQLAlchemy models used in the backend.
   - `name` – unique
   - `school_id` – FK to `schools.id` (CASCADE)
   - `academic_year_id` – FK to `academic_years.id` (CASCADE)
+  - `is_archived` – boolean flag, defaults to false
 - **Relationships:** has many `students`, many-to-many with `Subject` via `class_subjects` and with `Teacher` via `class_teachers`. `class_teachers` records determine homeroom, assistant or regular teachers.
 
 ## ClassSubject
