@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable, Sequence
 
+from pydantic import BaseModel
+
 from sqlalchemy import tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -13,6 +15,17 @@ from models.attendance import Attendance
 
 from .base import BaseParser
 from .constants import ImportSummary
+
+
+class ImportReport(BaseModel):
+    created: int = 0
+    updated: int = 0
+    skipped: int = 0
+    errors: list[str] = []
+
+    @classmethod
+    def from_summary(cls, summary: ImportSummary) -> "ImportReport":
+        return cls(**summary.__dict__)
 
 
 class ImportService:
