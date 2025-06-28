@@ -33,7 +33,7 @@ class ProgressReportParser(BaseParser):
         return self._event_cache[key]
 
     def _find_period(self, df: pd.DataFrame) -> Tuple[int | None, date | None, date | None]:
-        pattern = r"Период\s+с\s+(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})\s+по\s+(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})"
+        pattern = r"Период:?\s+с\s+(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})\s+по\s+(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})"
         for idx in range(len(df)):
             for col in range(len(df.columns)):
                 val = df.iloc[idx, col]
@@ -50,11 +50,22 @@ class ProgressReportParser(BaseParser):
         period_row, start, end = self._find_period(df)
         if period_row is None:
             return
-        # assume next row contains dates, then subjects
-        if period_row + 2 >= len(df):
-            return
-        date_row = df.iloc[period_row + 1]
-        subj_row = df.iloc[period_row + 2]
+        header_row = None
+        for idx in range(period_row, min(period_row + 5, len(df))):
+            row = df.iloc[idx]
+            if any(isinstance(val, str) and "предмет" in val.lower() for val in row):
+                header_row = idx
+                break
+        if header_row is None:
+            if period_row + 2 >= len(df):
+                return
+            date_row = df.iloc[period_row + 1]
+            subj_row = df.iloc[period_row + 2]
+        else:
+            if header_row + 2 >= len(df):
+                return
+            date_row = df.iloc[header_row + 1]
+            subj_row = df.iloc[header_row + 2]
         headers: List[Tuple[int, date, str, int]] = []
         for col in range(1, len(df.columns)):
             d_raw = date_row[col]

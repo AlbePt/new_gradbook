@@ -62,17 +62,24 @@ class MarkSheetParser(BaseParser):
             grade_kind = GradeKindEnum.period_final
         return term_type, term_index, grade_kind
 
+    def _map_columns(
+        self, headers: pd.Series
+    ) -> Dict[int, Tuple[TermTypeEnum, int, GradeKindEnum]]:
+        """Map header columns to grade parameters."""
+        mapping: Dict[int, Tuple[TermTypeEnum, int, GradeKindEnum]] = {}
+        for col in range(1, len(headers)):
+            term_type, term_index, grade_kind = self._parse_header(str(headers[col]))
+            if term_type is not None and grade_kind is not None:
+                mapping[col] = (term_type, term_index, grade_kind)
+        return mapping
+
     def parse(self) -> Iterator[GradeCreate]:
         df = pd.read_excel(self.path, header=None)
         header_idx = self._find_header_row(df)
         if header_idx is None:
             return
         headers = df.iloc[header_idx]
-        mapping: Dict[int, Tuple[TermTypeEnum, int, GradeKindEnum]] = {}
-        for col in range(1, len(headers)):
-            term_type, term_index, grade_kind = self._parse_header(str(headers[col]))
-            if term_type is not None and grade_kind is not None:
-                mapping[col] = (term_type, term_index, grade_kind)
+        mapping = self._map_columns(headers)
         for row_idx in range(header_idx + 1, len(df)):
             row = df.iloc[row_idx]
             subject = row[0]
