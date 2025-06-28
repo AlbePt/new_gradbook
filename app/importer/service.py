@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable, Sequence
 
+import structlog
+
 from pydantic import BaseModel
 
 from sqlalchemy import tuple_
@@ -15,6 +17,8 @@ from models.attendance import Attendance
 
 from .base import BaseParser
 from .constants import ImportSummary
+
+log = structlog.get_logger(__name__)
 
 
 class ImportReport(BaseModel):
@@ -145,5 +149,17 @@ class ImportService:
     def import_from_parser(self, parser: BaseParser) -> ImportSummary:
         summary = ImportSummary()
         for batch in parser.iter_batches():
-            summary += self.import_items(batch)
+            try:
+                batch_summary = self.import_items(batch)
+            except Exception:  # pylint: disable=broad-except
+                log.error("import_error", exc_info=True)
+                raise
+            else:
+                log.info(
+                    "batch_imported",
+                    created=batch_summary.created,
+                    updated=batch_summary.updated,
+                    skipped=batch_summary.skipped,
+                )
+                summary += batch_summary
         return summary
