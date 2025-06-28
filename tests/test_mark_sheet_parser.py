@@ -43,3 +43,14 @@ def test_mark_sheet_parser(tmp_path):
     assert first.grade_kind == GradeKindEnum.period_final
     assert first.value == 5
     assert first.lesson_event_id is None
+
+def test_map_columns():
+    df = pd.DataFrame([["Предмет", "1 четверть", "1 четверть ср", "2 четверть", "Год"]])
+    parser = MarkSheetParser("dummy")
+    mapping = parser._map_columns(df.iloc[0])
+    assert mapping == {
+        1: (TermTypeEnum.quarter, 1, GradeKindEnum.period_final),
+        2: (TermTypeEnum.quarter, 1, GradeKindEnum.avg),
+        3: (TermTypeEnum.quarter, 2, GradeKindEnum.period_final),
+        4: (TermTypeEnum.year, 1, GradeKindEnum.year_final),
+    }
