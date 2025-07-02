@@ -10,6 +10,7 @@ class AttendanceBase(BaseModel):
     comment: str | None = None
     student_id: int
     lesson_event_id: int
+    academic_year_id: int | None = None
 
 class AttendanceCreate(AttendanceBase):
     pass

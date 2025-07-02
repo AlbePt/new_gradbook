@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Dict
 
 import structlog
 
@@ -14,6 +14,7 @@ from backend.schemas.grade import GradeCreate
 from backend.schemas.attendance import AttendanceCreate
 from models.grade import Grade
 from models.attendance import Attendance
+from models.academic_year import AcademicYear
 
 from .base import BaseParser
 from .constants import ImportSummary
@@ -38,13 +39,35 @@ class ImportService:
     def __init__(self, db: Session, *, dry_run: bool = False) -> None:
         self.db = db
         self.dry_run = dry_run
+        self._ay_cache: Dict[int, int] = {}
+
+    def _get_academic_year_id(self, day: date) -> int:
+        key = day.year * 100 + day.month  # simple cache key
+        cached = self._ay_cache.get(key)
+        if cached is not None:
+            return cached
+        ay = (
+            self.db.query(AcademicYear)
+            .filter(AcademicYear.year_start <= day)
+            .filter(AcademicYear.year_end >= day)
+            .first()
+        )
+        if ay is None:
+            raise ValueError(f"academic year not found for {day}")
+        self._ay_cache[key] = ay.id
+        return ay.id
 
     def _upsert_grades(self, grades: Sequence[GradeCreate]) -> ImportSummary:
         summary = ImportSummary()
         if not grades:
             return summary
 
-        values = [g.model_dump() for g in grades]
+        values = []
+        for g in grades:
+            data = g.model_dump()
+            if data.get("academic_year_id") is None:
+                data["academic_year_id"] = self._get_academic_year_id(g.date)
+            values.append(data)
         keys = [
             (
                 g.student_id,
@@ -104,7 +127,12 @@ class ImportService:
         if not records:
             return summary
 
-        values = [r.model_dump() for r in records]
+        values = []
+        for r in records:
+            data = r.model_dump()
+            if data.get("academic_year_id") is None:
+                data["academic_year_id"] = self._get_academic_year_id(r.date)
+            values.append(data)
         keys = [(r.student_id, r.date) for r in records]
         existing = set(
             self.db.query(Attendance.student_id, Attendance.date)
