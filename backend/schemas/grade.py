@@ -15,6 +15,7 @@ class GradeBase(BaseModel):
     term_index: int
     grade_kind: GradeKindEnum
     lesson_event_id: int
+    academic_year_id: int | None = None
 
 
 class GradeCreate(GradeBase):
