@@ -61,10 +61,31 @@ class ProgressReportParser(BaseParser):
                         return idx, start, end
         return None, None, None
 
+    def _parse_year_range(self, year: str) -> Tuple[int, int]:
+        """Return start and end years for an academic year string."""
+        nums = [int(n) for n in re.findall(r"\d+", year)]
+        if len(nums) >= 2:
+            y1, y2 = nums[0], nums[1]
+        elif nums:
+            y1 = nums[0]
+            y2 = y1 + 1
+        else:
+            y1 = date.today().year
+            y2 = y1 + 1
+        if y1 < 100:
+            y1 += 2000
+        if y2 < 100:
+            base = (y1 // 100) * 100
+            y2 += base
+            if y2 < y1:
+                y2 += 100
+        return y1, y2
+
     def _map_dates(
-        self, month_row: pd.Series, day_row: pd.Series, year: int
+        self, month_row: pd.Series, day_row: pd.Series, academic_year: str
     ) -> Dict[int, date]:
         """Return mapping of column index to actual lesson date."""
+        year_start, year_end = self._parse_year_range(academic_year)
         mapping: Dict[int, date] = {}
         current_month: int | None = None
         for col in range(1, len(day_row)):
@@ -78,6 +99,10 @@ class ProgressReportParser(BaseParser):
                 continue
             try:
                 day_num = int(float(d_val))
+            except Exception:
+                continue
+            year = year_start if current_month >= 9 else year_end
+            try:
                 mapping[col] = date(year, current_month, day_num)
             except Exception:
                 continue
@@ -281,7 +306,7 @@ class ProgressReportParser(BaseParser):
 
             month_row = df.iloc[header_row]
             date_row = df.iloc[header_row + 1]
-            dates = self._map_dates(month_row, date_row, start.year if start else date.today().year)
+            dates = self._map_dates(month_row, date_row, academic_year)
 
             row_idx = header_row + 2
             while row_idx < len(df):
