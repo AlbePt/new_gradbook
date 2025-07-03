@@ -105,14 +105,12 @@ class ImportService:
         if not grades:
             return summary
 
-        values = []
+        items = {}
         for g in grades:
             data = g.model_dump()
             if data.get("academic_year_id") is None:
                 data["academic_year_id"] = self._get_academic_year_id(g.date)
-            values.append(data)
-        keys = [
-            (
+            key = (
                 g.student_id,
                 g.subject_id,
                 g.term_type,
@@ -120,8 +118,9 @@ class ImportService:
                 g.grade_kind,
                 g.lesson_event_id,
             )
-            for g in grades
-        ]
+            items[key] = data
+        keys = list(items.keys())
+        values = list(items.values())
         existing = set(
             self.db.query(
                 Grade.student_id,
@@ -170,13 +169,15 @@ class ImportService:
         if not records:
             return summary
 
-        values = []
+        items = {}
         for r in records:
             data = r.model_dump()
             if data.get("academic_year_id") is None:
                 data["academic_year_id"] = self._get_academic_year_id(r.date)
-            values.append(data)
-        keys = [(r.student_id, r.date) for r in records]
+            key = (r.student_id, r.date)
+            items[key] = data
+        keys = list(items.keys())
+        values = list(items.values())
         existing = set(
             self.db.query(Attendance.student_id, Attendance.date)
             .filter(tuple_(Attendance.student_id, Attendance.date).in_(keys))
