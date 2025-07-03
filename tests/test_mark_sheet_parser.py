@@ -58,10 +58,30 @@ def test_map_columns():
     parser = MarkSheetParser("dummy")
     headers = df.iloc[0]
     subj_col = parser._find_subject_column(headers)
-    mapping = parser._map_columns(headers, subj_col)
+    mapping = parser._map_columns(df, 0, subj_col)
     assert mapping == {
         1: (TermTypeEnum.quarter, 1, GradeKindEnum.period_final),
         2: (TermTypeEnum.quarter, 1, GradeKindEnum.avg),
+        3: (TermTypeEnum.quarter, 2, GradeKindEnum.period_final),
+        4: (TermTypeEnum.year, 1, GradeKindEnum.year_final),
+    }
+
+
+def test_map_columns_multiline():
+    df = pd.DataFrame(
+        [
+            [None, "Предмет", "Учебные периоды", None, "Год. оценка"],
+            ["№", None, None, None, None],
+            ["п/п", "1 четверть", "2 четверть", None, None],
+            [None, "итог", "итог", None, None],
+        ]
+    )
+    parser = MarkSheetParser("dummy")
+    headers = df.iloc[0]
+    subj_col = parser._find_subject_column(headers)
+    mapping = parser._map_columns(df, 0, subj_col)
+    assert mapping == {
+        2: (TermTypeEnum.quarter, 1, GradeKindEnum.period_final),
         3: (TermTypeEnum.quarter, 2, GradeKindEnum.period_final),
         4: (TermTypeEnum.year, 1, GradeKindEnum.year_final),
     }
@@ -84,3 +104,24 @@ def test_parser_with_row_numbers(tmp_path):
     items = list(parser.parse())
     assert len(items) == 8
     assert items[0].subject_name == "Математика"
+
+
+def test_parser_multiline_header(tmp_path):
+    df = pd.DataFrame(
+        [
+            ["Учебный год: 2024/2025", None, None, None, None],
+            ["Класс: 1A", None, None, None, None],
+            ["Ученик: Kid", None, None, None, None],
+            [None, "Предмет", "Учебные периоды", None, "Год. оценка"],
+            ["№", None, None, None, None],
+            ["п/п", "1 четверть", "2 четверть", None, None],
+            [None, "итог", "итог", None, None],
+            [1, "Математика", 5, 5, 5],
+            [2, "История", 4, 5, 5],
+        ]
+    )
+    file = tmp_path / "multi.xlsx"
+    df.to_excel(file, header=False, index=False)
+    parser = MarkSheetParser(str(file))
+    items = list(parser.parse())
+    assert len(items) == 6  # 2 subjects * (2 quarters + year)

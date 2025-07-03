@@ -96,12 +96,30 @@ class MarkSheetParser(BaseParser):
         return 0
 
     def _map_columns(
-        self, headers: pd.Series, subject_col: int
+        self, df: pd.DataFrame, header_idx: int, subject_col: int
     ) -> Dict[int, Tuple[TermTypeEnum, int, GradeKindEnum]]:
-        """Map header columns to grade parameters."""
+        """Map header columns to grade parameters.
+
+        This method supports multi-line headers by joining up to three
+        subsequent rows after the header row and parsing the combined text.
+        """
+
+        rows = [df.iloc[header_idx]]
+        for i in range(1, 4):
+            if header_idx + i < len(df):
+                rows.append(df.iloc[header_idx + i])
+
         mapping: Dict[int, Tuple[TermTypeEnum, int, GradeKindEnum]] = {}
-        for col in range(subject_col + 1, len(headers)):
-            term_type, term_index, grade_kind = self._parse_header(str(headers[col]))
+        for col in range(subject_col + 1, len(df.columns)):
+            parts = []
+            for row in rows:
+                val = row[col]
+                if isinstance(val, str):
+                    val = val.strip()
+                    if val:
+                        parts.append(val)
+            header_text = " ".join(parts)
+            term_type, term_index, grade_kind = self._parse_header(header_text)
             if term_type is not None and grade_kind is not None:
                 mapping[col] = (term_type, term_index, grade_kind)
         return mapping
@@ -116,7 +134,7 @@ class MarkSheetParser(BaseParser):
 
         headers = df.iloc[header_idx]
         subject_col = self._find_subject_column(headers)
-        mapping = self._map_columns(headers, subject_col)
+        mapping = self._map_columns(df, header_idx, subject_col)
         for row_idx in range(header_idx + 1, len(df)):
             row = df.iloc[row_idx]
             subject = row[subject_col]
