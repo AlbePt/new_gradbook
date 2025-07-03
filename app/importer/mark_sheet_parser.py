@@ -112,6 +112,8 @@ class MarkSheetParser(BaseParser):
                 rows.append(df.iloc[header_idx + i])
 
         mapping: Dict[int, Tuple[TermTypeEnum, int, GradeKindEnum]] = {}
+        last_tt: TermTypeEnum | None = None
+        last_ti: int | None = None
         for col in range(subject_col + 1, len(df.columns)):
             parts = []
             for row in rows:
@@ -122,8 +124,14 @@ class MarkSheetParser(BaseParser):
                         parts.append(val)
             header_text = " ".join(parts)
             term_type, term_index, grade_kind = self._parse_header(header_text)
+            if term_type is None:
+                term_type = last_tt
+            if term_index is None:
+                term_index = last_ti
             if term_type is not None and grade_kind is not None:
-                mapping[col] = (term_type, term_index, grade_kind)
+                mapping[col] = (term_type, term_index or 1, grade_kind)
+                last_tt = term_type
+                last_ti = term_index
         return mapping
 
     def parse(self) -> Iterator[ParsedRow]:
