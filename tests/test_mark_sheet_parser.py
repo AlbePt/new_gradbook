@@ -56,10 +56,31 @@ def test_mark_sheet_parser(tmp_path):
 def test_map_columns():
     df = pd.DataFrame([["Предмет", "1 четверть", "1 четверть ср", "2 четверть", "Год"]])
     parser = MarkSheetParser("dummy")
-    mapping = parser._map_columns(df.iloc[0])
+    headers = df.iloc[0]
+    subj_col = parser._find_subject_column(headers)
+    mapping = parser._map_columns(headers, subj_col)
     assert mapping == {
         1: (TermTypeEnum.quarter, 1, GradeKindEnum.period_final),
         2: (TermTypeEnum.quarter, 1, GradeKindEnum.avg),
         3: (TermTypeEnum.quarter, 2, GradeKindEnum.period_final),
         4: (TermTypeEnum.year, 1, GradeKindEnum.year_final),
     }
+
+
+def test_parser_with_row_numbers(tmp_path):
+    df = pd.DataFrame(
+        [
+            ["Учебный год: 2024/2025", None, None, None, None, None],
+            ["Класс: 1A", None, None, None, None, None],
+            ["Ученик: Kid", None, None, None, None, None],
+            ["№ п/п", "Предмет", "1 четверть", "1 четверть ср", "2 четверть", "Год"],
+            [1, "Математика", 5, 4.5, 5, 5],
+            [2, "История", 4, 4.0, 5, 5],
+        ]
+    )
+    file = tmp_path / "rows.xlsx"
+    df.to_excel(file, header=False, index=False)
+    parser = MarkSheetParser(str(file))
+    items = list(parser.parse())
+    assert len(items) == 8
+    assert items[0].subject_name == "Математика"
