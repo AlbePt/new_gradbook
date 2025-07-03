@@ -46,7 +46,7 @@ class Grade(Base):
     teacher_id = Column(
         Integer,
         ForeignKey("teachers.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
     )
     subject_id = Column(
         Integer,

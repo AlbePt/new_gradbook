@@ -96,3 +96,30 @@ def test_import_service_sets_year(tmp_path):
         db_grade = session.query(Grade).one()
         assert db_grade.academic_year_id == ay_id
         session.close()
+
+
+def test_grade_without_teacher(tmp_path):
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        _, _, _, d, _, _ = prepare(session)
+
+        row = ParsedRow(
+            student_name="Kid",
+            class_name="1A",
+            academic_year_name="2024/2025",
+            subject_name="Math",
+            teacher_name="",
+            lesson_date=d,
+            grade_value=5,
+            grade_kind="regular",
+            term_type="year",
+            term_index=1,
+        )
+        svc = ImportService(session)
+        svc.import_items([row])
+        db_grade = session.query(Grade).one()
+        assert db_grade.teacher_id is None
+        session.close()

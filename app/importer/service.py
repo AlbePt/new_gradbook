@@ -223,7 +223,7 @@ class ImportService:
                 continue
             subject_id = subj.id
 
-            teacher_id = 0
+            teacher_id = None
             if row.teacher_name:
                 teacher = (
                     self.db.query(Teacher)

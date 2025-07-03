@@ -87,7 +87,7 @@ This document summarizes the SQLAlchemy models used in the backend.
   - `value`
   - `date`
   - `student_id` – FK to `students.id` (CASCADE)
-  - `teacher_id` – FK to `teachers.id` (CASCADE)
+  - `teacher_id` – FK to `teachers.id` (CASCADE, nullable)
   - `subject_id` – FK to `subjects.id` (RESTRICT)
   - `academic_year_id` – FK to `academic_years.id` (CASCADE)
 - **Relationships:** belongs to `Student`, `Teacher`, `Subject` and `AcademicYear`.

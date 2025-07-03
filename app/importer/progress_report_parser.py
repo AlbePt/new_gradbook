@@ -115,7 +115,7 @@ class ProgressReportParser(BaseParser):
                             value=num,
                             date=day,
                             student_id=0,
-                            teacher_id=0,
+                            teacher_id=None,
                             subject_id=subj_id,
                             term_type=TermTypeEnum.year,
                             term_index=1,
