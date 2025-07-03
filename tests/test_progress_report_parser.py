@@ -40,6 +40,7 @@ def test_progress_report_parser(tmp_path):
     items = [item for batch in batches for item in batch]
     assert len(items) == 3
     assert isinstance(items[0], ParsedRow)
+    assert items[0].academic_year_name == "2024/2025"
     assert items[0].attendance_status == "absent"
     assert isinstance(items[1], ParsedRow)
     assert items[1].grade_kind == GradeKindEnum.regular.value
