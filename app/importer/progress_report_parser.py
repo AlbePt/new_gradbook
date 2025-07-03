@@ -127,8 +127,14 @@ class ProgressReportParser(BaseParser):
             return TermTypeEnum.quarter, 4
         return TermTypeEnum.year, 1
 
-    def _find_period(self, df: pd.DataFrame) -> Tuple[int | None, date | None, date | None]:
-        pattern = r"Период:?\s+с\s+(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})\s+по\s+(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})"
+    def _find_period(
+        self, df: pd.DataFrame
+    ) -> Tuple[int | None, str | None, date | None, date | None]:
+        """Return row index, academic year name and start/end dates."""
+        pattern = (
+            r"Период:?\s+с\s+(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})\s+по\s+"
+            r"(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})"
+        )
         for idx in range(len(df)):
             for col in range(len(df.columns)):
                 val = df.iloc[idx, col]
@@ -137,8 +143,13 @@ class ProgressReportParser(BaseParser):
                     if m:
                         start = pd.to_datetime(m.group(1), dayfirst=True).date()
                         end = pd.to_datetime(m.group(2), dayfirst=True).date()
-                        return idx, start, end
-        return None, None, None
+                        if start.month >= 9:
+                            y1 = start.year
+                        else:
+                            y1 = start.year - 1
+                        year_name = f"{y1}/{y1 + 1}"
+                        return idx, year_name, start, end
+        return None, None, None, None
 
     def _extract_info(self, df: pd.DataFrame, header_idx: int) -> tuple[str, str]:
         """Return academic year and class name from rows above header."""
@@ -174,7 +185,7 @@ class ProgressReportParser(BaseParser):
 
         if not has_student_mark:
             # old single-table format
-            period_row, start, _end = self._find_period(df)
+            period_row, period_year, start, _end = self._find_period(df)
             if period_row is None:
                 return
             header_row = None
@@ -197,6 +208,8 @@ class ProgressReportParser(BaseParser):
                 subj_row = df.iloc[header_row + 2]
 
             academic_year, class_name = self._extract_info(df, period_row)
+            if not academic_year:
+                academic_year = period_year or ""
             if not academic_year and start is not None:
                 if start.month >= 9:
                     y1 = start.year
