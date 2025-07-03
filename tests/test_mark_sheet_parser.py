@@ -105,6 +105,33 @@ def test_parser_with_row_numbers(tmp_path):
     assert items[0].subject_name == "Математика"
 
 
+def test_parser_multiple_students(tmp_path):
+    df = pd.DataFrame(
+        [
+            ["Учебный год: 2024/2025", None, None],
+            ["Класс: 1A", None, None],
+            ["Ученик: Kid1", None, None],
+            ["Предмет", "1 четверть", "Год"],
+            ["Math", 5, 5],
+            ["History", 4, 4],
+            [None, None, None],
+            ["Учебный год: 2024/2025", None, None],
+            ["Класс: 1A", None, None],
+            ["Ученик: Kid2", None, None],
+            ["Предмет", "1 четверть", "Год"],
+            ["Math", 3, 4],
+            ["History", 4, 5],
+        ]
+    )
+    file = tmp_path / "multi.xlsx"
+    df.to_excel(file, header=False, index=False)
+    parser = MarkSheetParser(str(file))
+    items = list(parser.parse())
+    assert len(items) == 8
+    assert items[0].student_name == "Kid1"
+    assert items[-1].student_name == "Kid2"
+
+
 def test_parser_multiline_header(tmp_path):
     df = pd.DataFrame(
         [

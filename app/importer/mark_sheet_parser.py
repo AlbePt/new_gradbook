@@ -142,41 +142,59 @@ class MarkSheetParser(BaseParser):
 
     def parse(self) -> Iterator[ParsedRow]:
         df = pd.read_excel(self.path, header=None)
-        header_idx = self._find_header_row(df)
-        if header_idx is None:
-            return
+        start = 0
+        while start < len(df):
+            sub_df = df.iloc[start:]
+            rel_header = self._find_header_row(sub_df)
+            if rel_header is None:
+                break
+            header_idx = start + rel_header
 
-        academic_year, class_name, student_name = self._extract_info(df, header_idx)
+            academic_year, class_name, student_name = self._extract_info(df, header_idx)
 
-        headers = df.iloc[header_idx]
-        subject_col = self._find_subject_column(headers)
-        mapping = self._map_columns(df, header_idx, subject_col)
-        for row_idx in range(header_idx + 1, len(df)):
-            row = df.iloc[row_idx]
-            subject = row[subject_col]
-            if not isinstance(subject, str) or not subject.strip():
-                continue
-            for col, (tt, ti, gk) in mapping.items():
-                val = row[col]
-                if pd.isna(val):
+            headers = df.iloc[header_idx]
+            subject_col = self._find_subject_column(headers)
+            mapping = self._map_columns(df, header_idx, subject_col)
+
+            row_idx = header_idx + 1
+            while row_idx < len(df):
+                row = df.iloc[row_idx]
+                if any(
+                    isinstance(val, str)
+                    and ("учебный" in val.lower() or "класс" in val.lower() or "ученик" in val.lower())
+                    for val in row
+                ):
+                    break
+                subject = row[subject_col]
+                if not isinstance(subject, str) or not subject.strip():
+                    if all(pd.isna(c) or (isinstance(c, str) and not c.strip()) for c in row):
+                        row_idx += 1
+                        break
+                    row_idx += 1
                     continue
-                try:
-                    num = float(str(val).replace(",", "."))
-                except ValueError:
-                    continue
-                yield ParsedRow(
-                    student_name=student_name,
-                    class_name=class_name,
-                    academic_year_name=academic_year,
-                    subject_name=str(subject).strip(),
-                    teacher_name="",
-                    lesson_date=date.today(),
-                    grade_value=num,
-                    grade_kind=gk.value,
-                    term_type=tt.value,
-                    term_index=ti,
-                    lesson_index=None,
-                    attendance_status=None,
-                    minutes_late=None,
-                    comment=None,
-                )
+                for col, (tt, ti, gk) in mapping.items():
+                    val = row[col]
+                    if pd.isna(val):
+                        continue
+                    try:
+                        num = float(str(val).replace(",", "."))
+                    except ValueError:
+                        continue
+                    yield ParsedRow(
+                        student_name=student_name,
+                        class_name=class_name,
+                        academic_year_name=academic_year,
+                        subject_name=str(subject).strip(),
+                        teacher_name="",
+                        lesson_date=date.today(),
+                        grade_value=num,
+                        grade_kind=gk.value,
+                        term_type=tt.value,
+                        term_index=ti,
+                        lesson_index=None,
+                        attendance_status=None,
+                        minutes_late=None,
+                        comment=None,
+                    )
+                row_idx += 1
+            start = row_idx
