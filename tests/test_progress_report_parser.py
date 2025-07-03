@@ -16,17 +16,29 @@ os.environ.setdefault("DB_NAME", "db")
 os.environ.setdefault("DB_USER", "user")
 os.environ.setdefault("DB_PASSWORD", "pass")
 
+from datetime import date
+
 from app.importer.progress_report_parser import ProgressReportParser
 from app.importer.base import ParsedRow
 from models.grade import GradeKindEnum
 
 def make_file(path: Path) -> None:
+    """Create a small XLSX file emulating the real ``Отчёт`` format."""
     df = pd.DataFrame(
         [
+            ["Учебный год: 2024/2025", None, None],
+            ["Класс: 1A", None, None],
             ["Период с 01.09.2024 по 02.09.2024", None, None],
-            ["", "01.09.2024", "02.09.2024"],
-            ["ФИО", "Math", "Math"],
-            ["Student", "Н/5", "4"],
+            ["Ученик: Kid1", None, None],
+            ["Предмет", "сентябрь", "сентябрь"],
+            ["", 1, 2],
+            ["Math", "5/Н", "4"],
+            ["History", "Б", ""],
+            ["Ученик: Kid2", None, None],
+            ["Предмет", "сентябрь", "сентябрь"],
+            ["", 1, 2],
+            ["Math", "3", "4"],
+            ["History", "О", ""],
         ]
     )
     df.to_excel(path, header=False, index=False)
@@ -36,18 +48,27 @@ def test_progress_report_parser(tmp_path):
     file = tmp_path / "report.xlsx"
     make_file(file)
     parser = ProgressReportParser(str(file))
-    batches = list(parser.iter_batches(10))
-    items = [item for batch in batches for item in batch]
-    assert len(items) == 3
-    assert isinstance(items[0], ParsedRow)
-    assert items[0].academic_year_name == "2024/2025"
-    assert items[0].attendance_status == "absent"
-    assert isinstance(items[1], ParsedRow)
-    assert items[1].grade_kind == GradeKindEnum.regular.value
-    assert items[1].term_type == "quarter"
-    assert items[1].term_index == 1
-    assert items[1].grade_value == 5
-    assert isinstance(items[2], ParsedRow)
-    assert items[2].term_type == "quarter"
-    assert items[2].term_index == 1
-    assert items[2].grade_value == 4
+    rows = list(parser.parse())
+    assert len(rows) == 7
+
+    first = rows[0]
+    assert isinstance(first, ParsedRow)
+    assert first.student_name == "Kid1"
+    assert first.subject_name == "Math"
+    assert first.lesson_date == date(2024, 9, 1)
+    assert first.grade_kind == GradeKindEnum.regular.value
+    assert first.grade_value == 5
+
+    absent = rows[1]
+    assert absent.attendance_status == "absent"
+    assert absent.lesson_date == date(2024, 9, 1)
+
+    kid2_day2 = rows[5]
+    assert kid2_day2.student_name == "Kid2"
+    assert kid2_day2.subject_name == "Math"
+    assert kid2_day2.lesson_date == date(2024, 9, 2)
+    assert kid2_day2.grade_value == 4
+
+    history = rows[3]
+    assert history.subject_name == "History"
+    assert history.attendance_status == "sick"
