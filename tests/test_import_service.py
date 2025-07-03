@@ -13,21 +13,27 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 sys.path.append(str(ROOT / "backend"))
 
+os.environ.setdefault("DATABASE_URL", "postgresql://localhost/db")
+os.environ.setdefault("SECRET_KEY", "x")
+os.environ.setdefault("DB_HOST", "localhost")
+os.environ.setdefault("DB_PORT", "5432")
+os.environ.setdefault("DB_NAME", "db")
+os.environ.setdefault("DB_USER", "user")
+os.environ.setdefault("DB_PASSWORD", "pass")
+
 from app.importer.service import ImportService
-from backend.schemas.grade import GradeCreate
+from app.importer.base import ParsedRow
 from models import (
     AcademicYear,
     City,
     Class,
     Grade,
-    GradeKindEnum,
     LessonEvent,
     Region,
     School,
     Student,
     Subject,
     Teacher,
-    TermTypeEnum,
 )
 
 
@@ -71,21 +77,22 @@ def test_import_service_sets_year(tmp_path):
         engine = create_engine(pg.url())
         Session = sessionmaker(bind=engine)
         session = Session()
-        tid, sid, stud_id, d, event_id, ay_id = prepare(session)
+        _, _, _, d, _, ay_id = prepare(session)
 
-        grade = GradeCreate(
-            value=5,
-            date=d,
-            student_id=stud_id,
-            teacher_id=tid,
-            subject_id=sid,
-            term_type=TermTypeEnum.year,
+        row = ParsedRow(
+            student_name="Kid",
+            class_name="1A",
+            academic_year_name="2024/2025",
+            subject_name="Math",
+            teacher_name="T",
+            lesson_date=d,
+            grade_value=5,
+            grade_kind="regular",
+            term_type="year",
             term_index=1,
-            grade_kind=GradeKindEnum.regular,
-            lesson_event_id=event_id,
         )
         svc = ImportService(session)
-        svc.import_items([grade])
+        svc.import_items([row])
         db_grade = session.query(Grade).one()
         assert db_grade.academic_year_id == ay_id
         session.close()

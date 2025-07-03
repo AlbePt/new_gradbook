@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Iterable, Sequence, Dict
+from datetime import date
 
 import structlog
 
@@ -10,13 +11,23 @@ from sqlalchemy import tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from backend.services import (
+    resolve_or_create_class,
+    resolve_or_create_student,
+    resolve_or_create_year,
+    resolve_subject,
+)
+from models import LessonEvent, School, Teacher
+from models.grade import GradeKindEnum, TermTypeEnum
+from models.attendance import AttendanceStatusEnum
+
 from backend.schemas.grade import GradeCreate
 from backend.schemas.attendance import AttendanceCreate
 from models.grade import Grade
 from models.attendance import Attendance
 from models.academic_year import AcademicYear
 
-from .base import BaseParser
+from .base import BaseParser, ParsedRow
 from .constants import ImportSummary
 
 log = structlog.get_logger(__name__)
@@ -36,10 +47,17 @@ class ImportReport(BaseModel):
 class ImportService:
     """Bulk import grades and attendance records."""
 
-    def __init__(self, db: Session, *, dry_run: bool = False) -> None:
+    def __init__(self, db: Session, *, dry_run: bool = False, school_id: int | None = None) -> None:
         self.db = db
         self.dry_run = dry_run
         self._ay_cache: Dict[int, int] = {}
+        self.school_id = school_id or self._get_default_school_id()
+
+    def _get_default_school_id(self) -> int:
+        school = self.db.query(School.id).first()
+        if school is None:
+            raise ValueError("no school found")
+        return school[0]
 
     def _get_academic_year_id(self, day: date) -> int:
         key = day.year * 100 + day.month  # simple cache key
@@ -56,6 +74,31 @@ class ImportService:
             raise ValueError(f"academic year not found for {day}")
         self._ay_cache[key] = ay.id
         return ay.id
+
+    def _get_lesson_event_id(
+        self,
+        day: date,
+        subject_id: int,
+        class_id: int,
+        lesson_index: int | None = None,
+    ) -> int:
+        query = (
+            self.db.query(LessonEvent)
+            .filter_by(subject_id=subject_id, class_id=class_id, lesson_date=day)
+        )
+        if lesson_index is not None:
+            query = query.filter_by(lesson_index=lesson_index)
+        event = query.first()
+        if event is None:
+            event = LessonEvent(
+                subject_id=subject_id,
+                class_id=class_id,
+                lesson_date=day,
+                lesson_index=lesson_index,
+            )
+            self.db.add(event)
+            self.db.flush([event])
+        return event.id
 
     def _upsert_grades(self, grades: Sequence[GradeCreate]) -> ImportSummary:
         summary = ImportSummary()
@@ -157,15 +200,87 @@ class ImportService:
             self.db.execute(stmt)
         return summary
 
-    def import_items(self, items: Iterable[object]) -> ImportSummary:
+    def import_items(self, items: Iterable[ParsedRow]) -> ImportSummary:
         summary = ImportSummary()
         grades: list[GradeCreate] = []
         attendance: list[AttendanceCreate] = []
-        for item in items:
-            if isinstance(item, GradeCreate):
-                grades.append(item)
-            elif isinstance(item, AttendanceCreate):
-                attendance.append(item)
+        for row in items:
+            year_id = resolve_or_create_year(self.db, row.academic_year_name)
+            class_id = resolve_or_create_class(
+                self.db, row.class_name, self.school_id, year_id
+            )
+            student_id = resolve_or_create_student(
+                self.db,
+                row.student_name,
+                self.school_id,
+                class_id,
+                row.class_name,
+            )
+            subj = resolve_subject(self.db, row.subject_name)
+            if subj is None:
+                summary.skipped += 1
+                summary.errors.append(f"subject not found: {row.subject_name}")
+                continue
+            subject_id = subj.id
+
+            teacher_id = 0
+            if row.teacher_name:
+                teacher = (
+                    self.db.query(Teacher)
+                    .filter_by(full_name=row.teacher_name, school_id=self.school_id)
+                    .first()
+                )
+                if teacher:
+                    teacher_id = teacher.id
+
+            event_id = self._get_lesson_event_id(
+                row.lesson_date, subject_id, class_id, row.lesson_index
+            )
+
+            if row.grade_value is not None:
+                term_type = (
+                    TermTypeEnum(row.term_type)
+                    if isinstance(row.term_type, str)
+                    else row.term_type
+                )
+                grade_kind = (
+                    GradeKindEnum(row.grade_kind)
+                    if isinstance(row.grade_kind, str)
+                    else row.grade_kind
+                )
+                grades.append(
+                    GradeCreate(
+                        value=row.grade_value,
+                        date=row.lesson_date,
+                        student_id=student_id,
+                        teacher_id=teacher_id,
+                        subject_id=subject_id,
+                        term_type=term_type,
+                        term_index=row.term_index or 1,
+                        grade_kind=grade_kind,
+                        lesson_event_id=event_id,
+                        academic_year_id=year_id,
+                    )
+                )
+
+            if row.attendance_status is not None:
+                status = (
+                    AttendanceStatusEnum(row.attendance_status)
+                    if isinstance(row.attendance_status, str)
+                    else row.attendance_status
+                )
+                attendance.append(
+                    AttendanceCreate(
+                        date=row.lesson_date,
+                        status=status,
+                        minutes_late=row.minutes_late,
+                        comment=row.comment,
+                        student_id=student_id,
+                        lesson_event_id=event_id,
+                        academic_year_id=year_id,
+                    )
+                )
+
         summary += self._upsert_grades(grades)
         summary += self._upsert_attendance(attendance)
         if self.dry_run:
