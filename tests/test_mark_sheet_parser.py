@@ -81,8 +81,7 @@ def test_map_columns_multiline():
     subj_col = parser._find_subject_column(headers)
     mapping = parser._map_columns(df, 0, subj_col)
     assert mapping == {
-        2: (TermTypeEnum.quarter, 1, GradeKindEnum.period_final),
-        3: (TermTypeEnum.quarter, 2, GradeKindEnum.period_final),
+        2: (TermTypeEnum.quarter, 2, GradeKindEnum.period_final),
         4: (TermTypeEnum.year, 1, GradeKindEnum.year_final),
     }
 
@@ -124,7 +123,7 @@ def test_parser_multiline_header(tmp_path):
     df.to_excel(file, header=False, index=False)
     parser = MarkSheetParser(str(file))
     items = list(parser.parse())
-    assert len(items) == 6  # 2 subjects * (2 quarters + year)
+    assert len(items) == 4  # 2 subjects * (quarter + year)
 
 
 def test_map_columns_weighted_avg():
@@ -156,4 +155,17 @@ def test_map_columns_missing_period_info():
         1: (TermTypeEnum.quarter, 1, GradeKindEnum.avg),
         2: (TermTypeEnum.quarter, 1, GradeKindEnum.weighted_avg),
         3: (TermTypeEnum.quarter, 1, GradeKindEnum.period_final),
+    }
+
+
+def test_map_columns_year_avg():
+    df = pd.DataFrame([["Предмет", "Год ср", "Год ср взв", "Год"]])
+    parser = MarkSheetParser("dummy")
+    headers = df.iloc[0]
+    subj_col = parser._find_subject_column(headers)
+    mapping = parser._map_columns(df, 0, subj_col)
+    assert mapping == {
+        1: (TermTypeEnum.year, 1, GradeKindEnum.avg),
+        2: (TermTypeEnum.year, 1, GradeKindEnum.weighted_avg),
+        3: (TermTypeEnum.year, 1, GradeKindEnum.year_final),
     }

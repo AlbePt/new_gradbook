@@ -54,10 +54,11 @@ class MarkSheetParser(BaseParser):
     def _parse_header(self, header: str) -> Tuple[TermTypeEnum | None, int | None, GradeKindEnum | None]:
         if not isinstance(header, str):
             return None, None, None
+
         s = header.lower()
-        term_type = None
-        term_index = None
-        grade_kind: GradeKindEnum | None = None
+
+        term_type: TermTypeEnum | None = None
+        term_index: int | None = None
 
         if "четвер" in s:
             term_type = TermTypeEnum.quarter
@@ -68,26 +69,31 @@ class MarkSheetParser(BaseParser):
         elif "год" in s:
             term_type = TermTypeEnum.year
             term_index = 1
-            grade_kind = GradeKindEnum.year_final
-            return term_type, term_index, grade_kind
+
         if "экз" in s:
             term_type = term_type or TermTypeEnum.year
             term_index = term_index or 1
             grade_kind = GradeKindEnum.exam
             return term_type, term_index, grade_kind
-        if term_type is None:
-            return None, None, None
-        m = re.search(r"(\d+)", s)
-        if m:
-            term_index = int(m.group(1))
-        else:
-            term_index = 1
+
+        if term_index is None:
+            m = re.search(r"(\d+)", s)
+            if m:
+                term_index = int(m.group(1))
+
         if "взв" in s or "взвеш" in s:
             grade_kind = GradeKindEnum.weighted_avg
         elif "ср" in s or "avg" in s or "бал" in s:
             grade_kind = GradeKindEnum.avg
-        else:
+        elif term_type == TermTypeEnum.year:
+            grade_kind = GradeKindEnum.year_final
+        elif "итог" in s:
             grade_kind = GradeKindEnum.period_final
+        elif term_type is not None:
+            grade_kind = GradeKindEnum.period_final
+        else:
+            grade_kind = None
+
         return term_type, term_index, grade_kind
 
     def _find_subject_column(self, headers: pd.Series) -> int:
