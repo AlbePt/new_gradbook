@@ -82,7 +82,9 @@ class MarkSheetParser(BaseParser):
             term_index = int(m.group(1))
         else:
             term_index = 1
-        if "ср" in s or "avg" in s or "бал" in s:
+        if "взв" in s or "взвеш" in s:
+            grade_kind = GradeKindEnum.weighted_avg
+        elif "ср" in s or "avg" in s or "бал" in s:
             grade_kind = GradeKindEnum.avg
         else:
             grade_kind = GradeKindEnum.period_final

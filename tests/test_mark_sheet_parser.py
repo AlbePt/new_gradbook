@@ -125,3 +125,15 @@ def test_parser_multiline_header(tmp_path):
     parser = MarkSheetParser(str(file))
     items = list(parser.parse())
     assert len(items) == 6  # 2 subjects * (2 quarters + year)
+
+
+def test_map_columns_weighted_avg():
+    df = pd.DataFrame([["Предмет", "1 четверть", "1 четверть ср взв"]])
+    parser = MarkSheetParser("dummy")
+    headers = df.iloc[0]
+    subj_col = parser._find_subject_column(headers)
+    mapping = parser._map_columns(df, 0, subj_col)
+    assert mapping == {
+        1: (TermTypeEnum.quarter, 1, GradeKindEnum.period_final),
+        2: (TermTypeEnum.quarter, 1, GradeKindEnum.weighted_avg),
+    }
