@@ -137,3 +137,23 @@ def test_map_columns_weighted_avg():
         1: (TermTypeEnum.quarter, 1, GradeKindEnum.period_final),
         2: (TermTypeEnum.quarter, 1, GradeKindEnum.weighted_avg),
     }
+
+
+def test_map_columns_missing_period_info():
+    df = pd.DataFrame(
+        [
+            ["Предмет", "Учебные периоды", None, None],
+            ["№", None, None, None],
+            ["п/п", "1 четверть", None, None],
+            [None, "Средний балл", "Ср. взв. балл", "Итог"],
+        ]
+    )
+    parser = MarkSheetParser("dummy")
+    headers = df.iloc[0]
+    subj_col = parser._find_subject_column(headers)
+    mapping = parser._map_columns(df, 0, subj_col)
+    assert mapping == {
+        1: (TermTypeEnum.quarter, 1, GradeKindEnum.avg),
+        2: (TermTypeEnum.quarter, 1, GradeKindEnum.weighted_avg),
+        3: (TermTypeEnum.quarter, 1, GradeKindEnum.period_final),
+    }
