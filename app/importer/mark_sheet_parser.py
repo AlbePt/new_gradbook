@@ -6,10 +6,9 @@ from typing import Dict, Iterator, Tuple
 
 import pandas as pd
 
-from backend.schemas.grade import GradeCreate
 from models.grade import GradeKindEnum, TermTypeEnum
 
-from .base import BaseParser
+from .base import BaseParser, ParsedRow
 
 
 class MarkSheetParser(BaseParser):
@@ -17,6 +16,33 @@ class MarkSheetParser(BaseParser):
 
     def __init__(self, path: str) -> None:
         self.path = path
+
+    def _extract_info(self, df: pd.DataFrame, header_idx: int) -> tuple[str, str, str]:
+        """Return academic year, class name and student name from rows above header."""
+        academic_year = ""
+        class_name = ""
+        student_name = ""
+        year_re = re.compile(r"учебный\s*год[:\s]*([\d/\\-]+)", re.I)
+        class_re = re.compile(r"класс[:\s]*([^\s]+)", re.I)
+        student_re = re.compile(r"ученик[:\s]*(.+)", re.I)
+        for idx in range(header_idx - 1, -1, -1):
+            row = df.iloc[idx]
+            text = " ".join(str(c) for c in row if isinstance(c, str))
+            if not academic_year:
+                m = year_re.search(text)
+                if m:
+                    academic_year = m.group(1).strip()
+            if not class_name:
+                m = class_re.search(text)
+                if m:
+                    class_name = m.group(1).strip()
+            if not student_name:
+                m = student_re.search(text)
+                if m:
+                    student_name = m.group(1).strip()
+            if academic_year and class_name and student_name:
+                break
+        return academic_year, class_name, student_name
 
     def _find_header_row(self, df: pd.DataFrame) -> int | None:
         for idx in range(len(df)):
@@ -73,11 +99,14 @@ class MarkSheetParser(BaseParser):
                 mapping[col] = (term_type, term_index, grade_kind)
         return mapping
 
-    def parse(self) -> Iterator[GradeCreate]:
+    def parse(self) -> Iterator[ParsedRow]:
         df = pd.read_excel(self.path, header=None)
         header_idx = self._find_header_row(df)
         if header_idx is None:
             return
+
+        academic_year, class_name, student_name = self._extract_info(df, header_idx)
+
         headers = df.iloc[header_idx]
         mapping = self._map_columns(headers)
         for row_idx in range(header_idx + 1, len(df)):
@@ -93,14 +122,19 @@ class MarkSheetParser(BaseParser):
                     num = float(str(val).replace(",", "."))
                 except ValueError:
                     continue
-                yield GradeCreate.model_construct(
-                    value=num,
-                    date=date.today(),
-                    student_id=0,
-                    teacher_id=0,
-                    subject_id=0,
-                    term_type=tt,
+                yield ParsedRow(
+                    student_name=student_name,
+                    class_name=class_name,
+                    academic_year_name=academic_year,
+                    subject_name=str(subject).strip(),
+                    teacher_name="",
+                    lesson_date=date.today(),
+                    grade_value=num,
+                    grade_kind=gk.value,
+                    term_type=tt.value,
                     term_index=ti,
-                    grade_kind=gk,
-                    lesson_event_id=None,
+                    lesson_index=None,
+                    attendance_status=None,
+                    minutes_late=None,
+                    comment=None,
                 )

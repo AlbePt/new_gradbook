@@ -12,6 +12,7 @@ class ParsedRow:
 
     student_name: str
     class_name: str
+    academic_year_name: str
     subject_name: str
     teacher_name: str
     lesson_date: date
