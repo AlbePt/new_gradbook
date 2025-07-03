@@ -124,3 +124,13 @@
 Добавлены эндпоинты `/auth/register` и `/auth/login` для регистрации пользователей и получения JWT токена. В теле запроса при регистрации нужно указать `username`, `password` и `role` (superuser, administrator, teacher, student, parent).
 
 Подробные эскизы интерфейса представлены в [docs/wireframes.md](docs/wireframes.md).
+
+## Импорт отчётов
+
+Формат файлов "Отчёт об успеваемости и посещаемости ученика" описан в
+[docs/progress_report_format.md](docs/progress_report_format.md). Чтобы
+загрузить такой отчёт в базу, используйте CLI:
+
+```bash
+python app/cli.py import progress_report FILE.xlsx
+```
