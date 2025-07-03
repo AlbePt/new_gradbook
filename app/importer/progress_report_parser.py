@@ -108,6 +108,25 @@ class ProgressReportParser(BaseParser):
                 continue
         return mapping
 
+    def _get_term_info(self, lesson_date: date) -> Tuple[TermTypeEnum, int]:
+        """Return the term type and index for a lesson date.
+
+        Months September-October are mapped to quarter 1, November-December to
+        quarter 2, January-March to quarter 3 and April-May to quarter 4. If the
+        date falls outside of these ranges, it is treated as a year grade.
+        """
+
+        month = lesson_date.month
+        if month in (9, 10):
+            return TermTypeEnum.quarter, 1
+        if month in (11, 12):
+            return TermTypeEnum.quarter, 2
+        if month in (1, 2, 3):
+            return TermTypeEnum.quarter, 3
+        if month in (4, 5):
+            return TermTypeEnum.quarter, 4
+        return TermTypeEnum.year, 1
+
     def _find_period(self, df: pd.DataFrame) -> Tuple[int | None, date | None, date | None]:
         pattern = r"Период:?\s+с\s+(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})\s+по\s+(\d{1,2}[\.\-/]\d{1,2}[\.\-/]\d{2,4})"
         for idx in range(len(df)):
@@ -238,6 +257,7 @@ class ProgressReportParser(BaseParser):
                                 num = float(part.replace(",", "."))
                             except ValueError:
                                 continue
+                            tt, ti = self._get_term_info(day)
                             yield ParsedRow(
                                 student_name=student,
                                 class_name=class_name,
@@ -248,8 +268,8 @@ class ProgressReportParser(BaseParser):
                                 lesson_index=event_id,
                                 grade_value=num,
                                 grade_kind=GradeKindEnum.regular.value,
-                                term_type=TermTypeEnum.year.value,
-                                term_index=1,
+                                term_type=tt.value,
+                                term_index=ti,
                                 attendance_status=None,
                                 minutes_late=None,
                                 comment=None,
@@ -356,6 +376,7 @@ class ProgressReportParser(BaseParser):
                                 num = float(part.replace(",", "."))
                             except ValueError:
                                 continue
+                            tt, ti = self._get_term_info(day)
                             yield ParsedRow(
                                 student_name=student,
                                 class_name=class_name,
@@ -366,8 +387,8 @@ class ProgressReportParser(BaseParser):
                                 lesson_index=event_id,
                                 grade_value=num,
                                 grade_kind=GradeKindEnum.regular.value,
-                                term_type=TermTypeEnum.year.value,
-                                term_index=1,
+                                term_type=tt.value,
+                                term_index=ti,
                                 attendance_status=None,
                                 minutes_late=None,
                                 comment=None,

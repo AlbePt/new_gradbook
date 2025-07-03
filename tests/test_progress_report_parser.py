@@ -43,6 +43,10 @@ def test_progress_report_parser(tmp_path):
     assert items[0].attendance_status == "absent"
     assert isinstance(items[1], ParsedRow)
     assert items[1].grade_kind == GradeKindEnum.regular.value
+    assert items[1].term_type == "quarter"
+    assert items[1].term_index == 1
     assert items[1].grade_value == 5
     assert isinstance(items[2], ParsedRow)
+    assert items[2].term_type == "quarter"
+    assert items[2].term_index == 1
     assert items[2].grade_value == 4
