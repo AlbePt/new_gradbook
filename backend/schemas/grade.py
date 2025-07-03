@@ -9,7 +9,7 @@ class GradeBase(BaseModel):
     value: float
     date: date
     student_id: int
-    teacher_id: int
+    teacher_id: int | None = None
     subject_id: int
     term_type: TermTypeEnum
     term_index: int
