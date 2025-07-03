@@ -16,6 +16,8 @@ os.environ.setdefault("DB_NAME", "db")
 os.environ.setdefault("DB_USER", "user")
 os.environ.setdefault("DB_PASSWORD", "pass")
 
+from datetime import date
+
 from app.importer.mark_sheet_parser import MarkSheetParser
 from models.grade import TermTypeEnum, GradeKindEnum
 
@@ -23,6 +25,9 @@ from models.grade import TermTypeEnum, GradeKindEnum
 def make_file(path: Path) -> None:
     df = pd.DataFrame(
         [
+            ["Учебный год: 2024/2025", None, None, None, None],
+            ["Класс: 1A", None, None, None, None],
+            ["Ученик: Kid", None, None, None, None],
             ["Предмет", "1 четверть", "1 четверть ср", "2 четверть", "Год"],
             ["Математика", 5, 4.5, 5, 5],
             ["История", 4, 4.0, 5, 5],
@@ -38,11 +43,15 @@ def test_mark_sheet_parser(tmp_path):
     items = list(parser.parse())
     assert len(items) == 8  # 2 subjects * 4 periods
     first = items[0]
-    assert first.term_type == TermTypeEnum.quarter
+    assert first.student_name == "Kid"
+    assert first.class_name == "1A"
+    assert first.academic_year_name == "2024/2025"
+    assert first.subject_name == "Математика"
+    assert first.term_type == "quarter"
     assert first.term_index == 1
-    assert first.grade_kind == GradeKindEnum.period_final
-    assert first.value == 5
-    assert first.lesson_event_id is None
+    assert first.grade_kind == "period_final"
+    assert first.grade_value == 5
+    assert isinstance(first.lesson_date, date)
 
 def test_map_columns():
     df = pd.DataFrame([["Предмет", "1 четверть", "1 четверть ср", "2 четверть", "Год"]])
