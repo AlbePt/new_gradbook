@@ -17,9 +17,7 @@ os.environ.setdefault("DB_USER", "user")
 os.environ.setdefault("DB_PASSWORD", "pass")
 
 from app.importer.progress_report_parser import ProgressReportParser
-from backend.schemas.grade import GradeCreate
-from backend.schemas.attendance import AttendanceCreate
-from models.attendance import AttendanceStatusEnum
+from app.importer.base import ParsedRow
 from models.grade import GradeKindEnum
 
 def make_file(path: Path) -> None:
@@ -41,10 +39,10 @@ def test_progress_report_parser(tmp_path):
     batches = list(parser.iter_batches(10))
     items = [item for batch in batches for item in batch]
     assert len(items) == 3
-    assert isinstance(items[0], AttendanceCreate)
-    assert items[0].status == AttendanceStatusEnum.absent
-    assert isinstance(items[1], GradeCreate)
-    assert items[1].grade_kind == GradeKindEnum.regular
-    assert items[1].value == 5
-    assert isinstance(items[2], GradeCreate)
-    assert items[2].value == 4
+    assert isinstance(items[0], ParsedRow)
+    assert items[0].attendance_status == "absent"
+    assert isinstance(items[1], ParsedRow)
+    assert items[1].grade_kind == GradeKindEnum.regular.value
+    assert items[1].grade_value == 5
+    assert isinstance(items[2], ParsedRow)
+    assert items[2].grade_value == 4
