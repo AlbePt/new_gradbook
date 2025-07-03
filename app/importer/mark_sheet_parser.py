@@ -88,12 +88,19 @@ class MarkSheetParser(BaseParser):
             grade_kind = GradeKindEnum.period_final
         return term_type, term_index, grade_kind
 
+    def _find_subject_column(self, headers: pd.Series) -> int:
+        """Return the index of the column that contains the subject name."""
+        for idx, cell in enumerate(headers):
+            if isinstance(cell, str) and "предмет" in cell.lower():
+                return idx
+        return 0
+
     def _map_columns(
-        self, headers: pd.Series
+        self, headers: pd.Series, subject_col: int
     ) -> Dict[int, Tuple[TermTypeEnum, int, GradeKindEnum]]:
         """Map header columns to grade parameters."""
         mapping: Dict[int, Tuple[TermTypeEnum, int, GradeKindEnum]] = {}
-        for col in range(1, len(headers)):
+        for col in range(subject_col + 1, len(headers)):
             term_type, term_index, grade_kind = self._parse_header(str(headers[col]))
             if term_type is not None and grade_kind is not None:
                 mapping[col] = (term_type, term_index, grade_kind)
@@ -108,10 +115,11 @@ class MarkSheetParser(BaseParser):
         academic_year, class_name, student_name = self._extract_info(df, header_idx)
 
         headers = df.iloc[header_idx]
-        mapping = self._map_columns(headers)
+        subject_col = self._find_subject_column(headers)
+        mapping = self._map_columns(headers, subject_col)
         for row_idx in range(header_idx + 1, len(df)):
             row = df.iloc[row_idx]
-            subject = row[0]
+            subject = row[subject_col]
             if not isinstance(subject, str) or not subject.strip():
                 continue
             for col, (tt, ti, gk) in mapping.items():
