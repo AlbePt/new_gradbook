@@ -2,16 +2,14 @@ from __future__ import annotations
 
 import re
 from datetime import date
-from typing import Dict, Iterator, List, Tuple, Any
+from typing import Dict, Iterator, List, Tuple
 
 import pandas as pd
 
-from backend.schemas.grade import GradeCreate
-from backend.schemas.attendance import AttendanceCreate
 from models.grade import GradeKindEnum, TermTypeEnum
 from models.attendance import AttendanceStatusEnum
 
-from .base import BaseParser
+from .base import BaseParser, ParsedRow
 from .constants import STATUS_CHAR_MAP, split_cell
 
 
@@ -45,9 +43,31 @@ class ProgressReportParser(BaseParser):
                         return idx, start, end
         return None, None, None
 
-    def parse(self) -> Iterator[Any]:
+    def _extract_info(self, df: pd.DataFrame, header_idx: int) -> tuple[str, str]:
+        """Return academic year and class name from rows above header."""
+        academic_year = ""
+        class_name = ""
+        year_re = re.compile(r"учебный\s*год[:\s]*([\d/\\-]+)", re.I)
+        class_re = re.compile(r"класс[:\s]*([^\s]+)", re.I)
+
+        for idx in range(header_idx - 1, -1, -1):
+            row = df.iloc[idx]
+            text = " ".join(str(c) for c in row if isinstance(c, str))
+            if not academic_year:
+                m = year_re.search(text)
+                if m:
+                    academic_year = m.group(1).strip()
+            if not class_name:
+                m = class_re.search(text)
+                if m:
+                    class_name = m.group(1).strip()
+            if academic_year and class_name:
+                break
+        return academic_year, class_name
+
+    def parse(self) -> Iterator[ParsedRow]:
         df = pd.read_excel(self.path, header=None)
-        period_row, start, end = self._find_period(df)
+        period_row, start, _end = self._find_period(df)
         if period_row is None:
             return
         header_row = None
@@ -66,6 +86,14 @@ class ProgressReportParser(BaseParser):
                 return
             date_row = df.iloc[header_row + 1]
             subj_row = df.iloc[header_row + 2]
+
+        academic_year, class_name = self._extract_info(df, period_row)
+        if not academic_year and start is not None:
+            if start.month >= 9:
+                y1 = start.year
+            else:
+                y1 = start.year - 1
+            academic_year = f"{y1}/{y1 + 1}"
         headers: List[Tuple[int, date, str, int]] = []
         for col in range(1, len(df.columns)):
             d_raw = date_row[col]
@@ -97,28 +125,40 @@ class ProgressReportParser(BaseParser):
                 for part in cell_parts:
                     if part in STATUS_CHAR_MAP:
                         status_str = STATUS_CHAR_MAP[part]
-                        status = AttendanceStatusEnum(status_str)
-                        yield AttendanceCreate.model_construct(
-                            date=day,
-                            status=status,
+                        yield ParsedRow(
+                            student_name=student,
+                            class_name=class_name,
+                            academic_year_name=academic_year,
+                            subject_name=subj_name,
+                            teacher_name="",
+                            lesson_date=day,
+                            lesson_index=event_id,
+                            grade_value=None,
+                            grade_kind=None,
+                            term_type=None,
+                            term_index=None,
+                            attendance_status=status_str,
                             minutes_late=None,
                             comment=None,
-                            student_id=0,
-                            lesson_event_id=event_id,
                         )
                     else:
                         try:
                             num = float(part.replace(",", "."))
                         except ValueError:
                             continue
-                        yield GradeCreate.model_construct(
-                            value=num,
-                            date=day,
-                            student_id=0,
-                            teacher_id=None,
-                            subject_id=subj_id,
-                            term_type=TermTypeEnum.year,
+                        yield ParsedRow(
+                            student_name=student,
+                            class_name=class_name,
+                            academic_year_name=academic_year,
+                            subject_name=subj_name,
+                            teacher_name="",
+                            lesson_date=day,
+                            lesson_index=event_id,
+                            grade_value=num,
+                            grade_kind=GradeKindEnum.regular.value,
+                            term_type=TermTypeEnum.year.value,
                             term_index=1,
-                            grade_kind=GradeKindEnum.regular,
-                            lesson_event_id=event_id,
+                            attendance_status=None,
+                            minutes_late=None,
+                            comment=None,
                         )
