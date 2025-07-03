@@ -8,6 +8,7 @@ from sqlalchemy import (
     ForeignKey,
     SmallInteger,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from core.db import Base
@@ -30,6 +31,10 @@ STATUS_CHAR_MAP = {
 
 class Attendance(Base):
     __tablename__ = 'attendance'
+
+    __table_args__ = (
+        UniqueConstraint('student_id', 'date', name='uix_student_date'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     date = Column(Date, nullable=False)
