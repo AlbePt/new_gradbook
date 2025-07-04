@@ -25,6 +25,7 @@ from app.importer.service import ImportService
 from app.importer.base import ParsedRow
 from models import (
     AcademicYear,
+    AcademicPeriod,
     City,
     Class,
     Grade,
@@ -34,6 +35,7 @@ from models import (
     Student,
     Subject,
     Teacher,
+    TermTypeEnum,
 )
 
 
@@ -122,4 +124,50 @@ def test_grade_without_teacher(tmp_path):
         svc.import_items([row])
         db_grade = session.query(Grade).one()
         assert db_grade.teacher_id is None
+        session.close()
+
+
+def test_period_lookup(tmp_path):
+    """Grades should use term index from academic periods."""
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        _, _, _, _d, _ev, ay_id = prepare(session)
+        session.add_all([
+            AcademicPeriod(
+                academic_year_id=ay_id,
+                term_type=TermTypeEnum.quarter,
+                term_index=1,
+                start_date=date(2024, 9, 1),
+                end_date=date(2024, 10, 31),
+            ),
+            AcademicPeriod(
+                academic_year_id=ay_id,
+                term_type=TermTypeEnum.quarter,
+                term_index=2,
+                start_date=date(2024, 11, 1),
+                end_date=date(2024, 12, 31),
+            ),
+        ])
+        session.commit()
+
+        row = ParsedRow(
+            student_name="Kid",
+            class_name="1A",
+            academic_year_name="2024/2025",
+            subject_name="Math",
+            teacher_name="T",
+            lesson_date=date(2024, 11, 20),
+            grade_value=4,
+            grade_kind="regular",
+            term_type="quarter",
+            term_index=1,
+        )
+        svc = ImportService(session)
+        svc.import_items([row])
+        db_grade = session.query(Grade).one()
+        assert db_grade.term_index == 2
+        assert db_grade.term_type == TermTypeEnum.quarter
         session.close()
