@@ -31,10 +31,17 @@ MONTH_MAP = {
 class ProgressReportParser(BaseParser):
     """Parse progress report tables exported to XLSX."""
 
-    def __init__(self, path: str, class_id: int = 0, subject_map: Dict[str, int] | None = None) -> None:
+    def __init__(
+        self,
+        path: str,
+        class_id: int = 0,
+        subject_map: Dict[str, int] | None = None,
+        periods: List | None = None,
+    ) -> None:
         self.path = path
         self.class_id = class_id
         self.subject_map = subject_map or {}
+        self.periods = periods or []
         self._event_cache: Dict[Tuple[date, int, int], int] = {}
         self._next_event_id = 1
 
@@ -115,6 +122,10 @@ class ProgressReportParser(BaseParser):
         quarter 2, January-March to quarter 3 and April-May to quarter 4. If the
         date falls outside of these ranges, it is treated as a year grade.
         """
+
+        for p in self.periods:
+            if p.start_date <= lesson_date <= p.end_date:
+                return p.term_type, p.term_index
 
         month = lesson_date.month
         if month in (9, 10):

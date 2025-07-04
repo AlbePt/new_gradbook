@@ -18,3 +18,4 @@ class AcademicYear(Base):
     classes = relationship('Class', back_populates='academic_year', cascade='all, delete-orphan')
     teacher_subjects = relationship('TeacherSubject', back_populates='academic_year', cascade='all, delete-orphan')
     class_teachers = relationship('ClassTeacher', back_populates='academic_year', cascade='all, delete-orphan')
+    periods = relationship('AcademicPeriod', back_populates='academic_year', cascade='all, delete-orphan')
