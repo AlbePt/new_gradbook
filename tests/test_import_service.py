@@ -36,6 +36,7 @@ from models import (
     Subject,
     Teacher,
     TermTypeEnum,
+    GradeKindEnum,
 )
 
 
@@ -170,4 +171,49 @@ def test_period_lookup(tmp_path):
         db_grade = session.query(Grade).one()
         assert db_grade.term_index == 2
         assert db_grade.term_type == TermTypeEnum.quarter
+        session.close()
+
+
+def test_remove_old_regular_grades(tmp_path):
+    """Import should delete old regular grades for the same period."""
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        teacher_id, subj_id, student_id, d_old, event_id_old, ay_id = prepare(session)
+
+        old_grade = Grade(
+            value=3,
+            date=d_old,
+            student_id=student_id,
+            teacher_id=teacher_id,
+            subject_id=subj_id,
+            term_type=TermTypeEnum.year,
+            term_index=1,
+            grade_kind=GradeKindEnum.regular,
+            lesson_event_id=event_id_old,
+            academic_year_id=ay_id,
+        )
+        session.add(old_grade)
+        session.commit()
+
+        row = ParsedRow(
+            student_name="Kid",
+            class_name="1A",
+            academic_year_name="2024/2025",
+            subject_name="Math",
+            teacher_name="T",
+            lesson_date=d_old.replace(day=d_old.day + 1),
+            grade_value=5,
+            grade_kind="regular",
+            term_type="year",
+            term_index=1,
+        )
+        svc = ImportService(session)
+        svc.import_items([row])
+        grades = session.query(Grade).all()
+        assert len(grades) == 1
+        assert grades[0].value == 5
+        assert grades[0].date != d_old
         session.close()

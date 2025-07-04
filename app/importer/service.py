@@ -116,6 +116,25 @@ class ImportService:
             self.db.flush([event])
         return event.id
 
+    def _delete_old_regular_grades(
+        self,
+        keys: Iterable[tuple[int, int, TermTypeEnum, int]],
+    ) -> None:
+        """Delete existing regular grades for provided combinations."""
+        if self.dry_run:
+            return
+        for class_id, year_id, term_type, term_index in keys:
+            (
+                self.db.query(Grade)
+                .join(LessonEvent)
+                .filter(LessonEvent.class_id == class_id)
+                .filter(Grade.academic_year_id == year_id)
+                .filter(Grade.term_type == term_type)
+                .filter(Grade.term_index == term_index)
+                .filter(Grade.grade_kind == GradeKindEnum.regular)
+                .delete(synchronize_session=False)
+            )
+
     def _upsert_grades(self, grades: Sequence[GradeCreate]) -> ImportSummary:
         summary = ImportSummary()
         if not grades:
@@ -221,6 +240,7 @@ class ImportService:
         summary = ImportSummary()
         grades: list[GradeCreate] = []
         attendance: list[AttendanceCreate] = []
+        deletions: set[tuple[int, int, TermTypeEnum, int]] = set()
         for row in items:
             year_id = resolve_or_create_year(self.db, row.academic_year_name)
             class_id = resolve_or_create_class(
@@ -270,6 +290,8 @@ class ImportService:
                     if isinstance(row.grade_kind, str)
                     else row.grade_kind
                 )
+                if grade_kind == GradeKindEnum.regular:
+                    deletions.add((class_id, year_id, term_type, term_index))
                 grades.append(
                     GradeCreate(
                         value=row.grade_value,
@@ -303,6 +325,7 @@ class ImportService:
                     )
                 )
 
+        self._delete_old_regular_grades(deletions)
         summary += self._upsert_grades(grades)
         summary += self._upsert_attendance(attendance)
         if self.dry_run:
