@@ -28,7 +28,7 @@ def upgrade() -> None:
     )
     op.create_table(
         'academic_periods',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
+        sa.Column('id', sa.Integer(), primary_key=True),
         sa.Column('academic_year_id', sa.Integer(), nullable=False),
         sa.Column('term_type', term_type_enum, nullable=False),
         sa.Column('term_index', sa.SmallInteger(), nullable=False),
