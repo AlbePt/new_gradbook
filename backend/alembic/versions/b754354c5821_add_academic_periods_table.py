@@ -9,6 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 revision: str = 'b754354c5821'
 down_revision: Union[str, None] = 'ad004e2829b1'
@@ -17,7 +18,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    term_type_enum = sa.Enum(
+    term_type_enum = postgresql.ENUM(
         'trimester',
         'quarter',
         'semester',
