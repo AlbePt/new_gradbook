@@ -124,10 +124,14 @@ class ImportService:
         if self.dry_run:
             return
         for class_id, year_id, term_type, term_index in keys:
+            event_ids = (
+                self.db.query(LessonEvent.id)
+                .filter(LessonEvent.class_id == class_id)
+                .subquery()
+            )
             (
                 self.db.query(Grade)
-                .join(LessonEvent)
-                .filter(LessonEvent.class_id == class_id)
+                .filter(Grade.lesson_event_id.in_(event_ids))
                 .filter(Grade.academic_year_id == year_id)
                 .filter(Grade.term_type == term_type)
                 .filter(Grade.term_index == term_index)
