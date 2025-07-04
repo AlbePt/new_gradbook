@@ -17,7 +17,7 @@ from backend.services import (
     resolve_or_create_year,
     resolve_subject,
 )
-from models import LessonEvent, School, Teacher
+from models import LessonEvent, School, Teacher, AcademicPeriod
 from models.grade import GradeKindEnum, TermTypeEnum
 from models.attendance import AttendanceStatusEnum
 
@@ -51,6 +51,7 @@ class ImportService:
         self.db = db
         self.dry_run = dry_run
         self._ay_cache: Dict[int, int] = {}
+        self._period_cache: Dict[int, list] = {}
         self.school_id = school_id or self._get_default_school_id()
 
     def _get_default_school_id(self) -> int:
@@ -74,6 +75,21 @@ class ImportService:
             raise ValueError(f"academic year not found for {day}")
         self._ay_cache[key] = ay.id
         return ay.id
+
+    def _get_period_info(self, year_id: int, day: date) -> tuple[TermTypeEnum, int] | None:
+        """Return term type and index for a date using DB periods."""
+        periods = self._period_cache.get(year_id)
+        if periods is None:
+            periods = (
+                self.db.query(AcademicPeriod)
+                .filter_by(academic_year_id=year_id)
+                .all()
+            )
+            self._period_cache[year_id] = periods
+        for period in periods:
+            if period.start_date <= day <= period.end_date:
+                return period.term_type, period.term_index
+        return None
 
     def _get_lesson_event_id(
         self,
@@ -239,11 +255,16 @@ class ImportService:
             )
 
             if row.grade_value is not None:
-                term_type = (
-                    TermTypeEnum(row.term_type)
-                    if isinstance(row.term_type, str)
-                    else row.term_type
-                )
+                period_info = self._get_period_info(year_id, row.lesson_date)
+                if period_info:
+                    term_type, term_index = period_info
+                else:
+                    term_type = (
+                        TermTypeEnum(row.term_type)
+                        if isinstance(row.term_type, str)
+                        else row.term_type or TermTypeEnum.year
+                    )
+                    term_index = row.term_index or 1
                 grade_kind = (
                     GradeKindEnum(row.grade_kind)
                     if isinstance(row.grade_kind, str)
@@ -257,7 +278,7 @@ class ImportService:
                         teacher_id=teacher_id,
                         subject_id=subject_id,
                         term_type=term_type,
-                        term_index=row.term_index or 1,
+                        term_index=term_index,
                         grade_kind=grade_kind,
                         lesson_event_id=event_id,
                         academic_year_id=year_id,
