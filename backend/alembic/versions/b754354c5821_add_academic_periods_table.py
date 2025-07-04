@@ -17,11 +17,19 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    term_type_enum = sa.Enum(
+        'trimester',
+        'quarter',
+        'semester',
+        'year',
+        name='term_type_enum',
+        create_type=False,
+    )
     op.create_table(
         'academic_periods',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('academic_year_id', sa.Integer(), nullable=False),
-        sa.Column('term_type', sa.Enum('trimester', 'quarter', 'semester', 'year', name='term_type_enum'), nullable=False),
+        sa.Column('term_type', term_type_enum, nullable=False),
         sa.Column('term_index', sa.SmallInteger(), nullable=False),
         sa.Column('start_date', sa.Date(), nullable=False),
         sa.Column('end_date', sa.Date(), nullable=False),
