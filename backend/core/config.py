@@ -1,8 +1,5 @@
 # backend/core/config.py
-try:
-    from pydantic_settings import BaseSettings
-except ImportError:  # fallback for environments without pydantic-settings
-    from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from pydantic import Field
 
 
