@@ -17,7 +17,7 @@ from backend.services import (
     resolve_or_create_year,
     resolve_subject,
 )
-from models import LessonEvent, School, Teacher, AcademicPeriod
+from models import LessonEvent, School, Teacher, AcademicPeriod, Class, Student
 from models.grade import GradeKindEnum, TermTypeEnum
 from models.attendance import AttendanceStatusEnum
 
@@ -115,6 +115,30 @@ class ImportService:
             self.db.add(event)
             self.db.flush([event])
         return event.id
+
+    def _clear_regular_grades(
+        self, class_name: str, year_name: str, start: date, end: date
+    ) -> None:
+        """Remove existing regular grades for class and period."""
+        year_id = resolve_or_create_year(self.db, year_name)
+        cls = (
+            self.db.query(Class)
+            .filter_by(name=class_name, school_id=self.school_id, academic_year_id=year_id)
+            .first()
+        )
+        if not cls:
+            return
+        student_ids = [s.id for s in self.db.query(Student.id).filter_by(class_id=cls.id).all()]
+        if not student_ids:
+            return
+        (
+            self.db.query(Grade)
+            .filter(Grade.student_id.in_(student_ids))
+            .filter(Grade.grade_kind == GradeKindEnum.regular)
+            .filter(Grade.date >= start)
+            .filter(Grade.date <= end)
+            .delete(synchronize_session=False)
+        )
 
     def _upsert_grades(self, grades: Sequence[GradeCreate]) -> ImportSummary:
         summary = ImportSummary()
@@ -313,6 +337,11 @@ class ImportService:
 
     def import_from_parser(self, parser: BaseParser) -> ImportSummary:
         summary = ImportSummary()
+        if hasattr(parser, "get_class_period"):
+            info = parser.get_class_period()
+            if info:
+                class_name, year_name, start, end = info
+                self._clear_regular_grades(class_name, year_name, start, end)
         for batch in parser.iter_batches():
             try:
                 batch_summary = self.import_items(batch)
