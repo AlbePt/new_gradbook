@@ -45,6 +45,39 @@ class ProgressReportParser(BaseParser):
         self._event_cache: Dict[Tuple[date, int, int], int] = {}
         self._next_event_id = 1
 
+    def get_class_period(self) -> tuple[str, str, date, date] | None:
+        """Return class name, academic year name and start/end dates."""
+        df = pd.read_excel(self.path, header=None)
+
+        has_student_mark = df.apply(
+            lambda r: r.astype(str).str.contains("Ученик:", case=False, na=False).any(),
+            axis=1,
+        ).any()
+
+        if not has_student_mark:
+            period_row, period_year, start, end = self._find_period(df)
+            if period_row is None or start is None or end is None:
+                return None
+            academic_year, class_name = self._extract_info(df, period_row)
+            if not academic_year:
+                academic_year = period_year or ""
+            return class_name, academic_year, start, end
+
+        # multi-section format
+        student_idx = None
+        for j in range(len(df)):
+            row = df.iloc[j]
+            if any(isinstance(val, str) and "ученик" in val.lower() for val in row):
+                student_idx = j
+                break
+        if student_idx is None:
+            return None
+        period_row, start, end = self._find_period_back(df, student_idx)
+        if period_row is None or start is None or end is None:
+            return None
+        academic_year, class_name = self._extract_info(df, period_row)
+        return class_name, academic_year, start, end
+
     def _get_event_id(self, day: date, subject_id: int) -> int:
         key = (day, subject_id, self.class_id)
         if key not in self._event_cache:
