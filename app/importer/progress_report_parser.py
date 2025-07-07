@@ -42,8 +42,7 @@ class ProgressReportParser(BaseParser):
         self.class_id = class_id
         self.subject_map = subject_map or {}
         self.periods = periods or []
-        self._event_cache: Dict[Tuple[date, int, int], int] = {}
-        self._next_event_id = 1
+        self._event_cache: Dict[Tuple[date, int, int, int], int] = {}
 
     def get_class_period(self) -> tuple[str, str, date, date] | None:
         """Return class name, academic year name and start/end dates."""
@@ -78,11 +77,12 @@ class ProgressReportParser(BaseParser):
         academic_year, class_name = self._extract_info(df, period_row)
         return class_name, academic_year, start, end
 
-    def _get_event_id(self, day: date, subject_id: int) -> int:
-        key = (day, subject_id, self.class_id)
+    def _get_event_id(self, day: date, subject_id: int, index: int = 1) -> int:
+        """Return a stable event identifier for the given lesson index."""
+
+        key = (day, subject_id, self.class_id, index)
         if key not in self._event_cache:
-            self._event_cache[key] = self._next_event_id
-            self._next_event_id += 1
+            self._event_cache[key] = index
         return self._event_cache[key]
 
     def _find_period_back(
@@ -289,10 +289,22 @@ class ProgressReportParser(BaseParser):
                     cell_parts = split_cell(str(val))
                     if not cell_parts:
                         continue
-                    event_id = self._get_event_id(day, subj_id)
+
+                    grades = []
+                    statuses = []
                     for part in cell_parts:
                         if part in STATUS_CHAR_MAP:
-                            status_str = STATUS_CHAR_MAP[part]
+                            statuses.append(part)
+                        else:
+                            try:
+                                grades.append(float(part.replace(",", ".")))
+                            except ValueError:
+                                continue
+
+                    index = 1
+                    if statuses:
+                        event_id = self._get_event_id(day, subj_id, index)
+                        for st in statuses:
                             yield ParsedRow(
                                 student_name=student,
                                 class_name=class_name,
@@ -305,15 +317,11 @@ class ProgressReportParser(BaseParser):
                                 grade_kind=None,
                                 term_type=None,
                                 term_index=None,
-                                attendance_status=status_str,
+                                attendance_status=STATUS_CHAR_MAP[st],
                                 minutes_late=None,
                                 comment=None,
                             )
-                        else:
-                            try:
-                                num = float(part.replace(",", "."))
-                            except ValueError:
-                                continue
+                        if grades:
                             tt, ti = self._get_term_info(day)
                             yield ParsedRow(
                                 student_name=student,
@@ -323,7 +331,7 @@ class ProgressReportParser(BaseParser):
                                 teacher_name="",
                                 lesson_date=day,
                                 lesson_index=event_id,
-                                grade_value=num,
+                                grade_value=grades[0],
                                 grade_kind=GradeKindEnum.regular.value,
                                 term_type=tt.value,
                                 term_index=ti,
@@ -331,6 +339,29 @@ class ProgressReportParser(BaseParser):
                                 minutes_late=None,
                                 comment=None,
                             )
+                            grades = grades[1:]
+                            index += 1
+
+                    for num in grades:
+                        event_id = self._get_event_id(day, subj_id, index)
+                        tt, ti = self._get_term_info(day)
+                        yield ParsedRow(
+                            student_name=student,
+                            class_name=class_name,
+                            academic_year_name=academic_year,
+                            subject_name=subj_name,
+                            teacher_name="",
+                            lesson_date=day,
+                            lesson_index=event_id,
+                            grade_value=num,
+                            grade_kind=GradeKindEnum.regular.value,
+                            term_type=tt.value,
+                            term_index=ti,
+                            attendance_status=None,
+                            minutes_late=None,
+                            comment=None,
+                        )
+                        index += 1
             return
 
         # multi-section format with repeated "Ученик:" rows
@@ -408,10 +439,22 @@ class ProgressReportParser(BaseParser):
                     cell_parts = split_cell(str(val))
                     if not cell_parts:
                         continue
-                    event_id = self._get_event_id(day, subj_id)
+
+                    grades = []
+                    statuses = []
                     for part in cell_parts:
                         if part in STATUS_CHAR_MAP:
-                            status_str = STATUS_CHAR_MAP[part]
+                            statuses.append(part)
+                        else:
+                            try:
+                                grades.append(float(part.replace(",", ".")))
+                            except ValueError:
+                                continue
+
+                    index = 1
+                    if statuses:
+                        event_id = self._get_event_id(day, subj_id, index)
+                        for st in statuses:
                             yield ParsedRow(
                                 student_name=student,
                                 class_name=class_name,
@@ -424,15 +467,11 @@ class ProgressReportParser(BaseParser):
                                 grade_kind=None,
                                 term_type=None,
                                 term_index=None,
-                                attendance_status=status_str,
+                                attendance_status=STATUS_CHAR_MAP[st],
                                 minutes_late=None,
                                 comment=None,
                             )
-                        else:
-                            try:
-                                num = float(part.replace(",", "."))
-                            except ValueError:
-                                continue
+                        if grades:
                             tt, ti = self._get_term_info(day)
                             yield ParsedRow(
                                 student_name=student,
@@ -442,7 +481,7 @@ class ProgressReportParser(BaseParser):
                                 teacher_name="",
                                 lesson_date=day,
                                 lesson_index=event_id,
-                                grade_value=num,
+                                grade_value=grades[0],
                                 grade_kind=GradeKindEnum.regular.value,
                                 term_type=tt.value,
                                 term_index=ti,
@@ -450,5 +489,28 @@ class ProgressReportParser(BaseParser):
                                 minutes_late=None,
                                 comment=None,
                             )
+                            grades = grades[1:]
+                            index += 1
+
+                    for num in grades:
+                        event_id = self._get_event_id(day, subj_id, index)
+                        tt, ti = self._get_term_info(day)
+                        yield ParsedRow(
+                            student_name=student,
+                            class_name=class_name,
+                            academic_year_name=academic_year,
+                            subject_name=subj_name,
+                            teacher_name="",
+                            lesson_date=day,
+                            lesson_index=event_id,
+                            grade_value=num,
+                            grade_kind=GradeKindEnum.regular.value,
+                            term_type=tt.value,
+                            term_index=ti,
+                            attendance_status=None,
+                            minutes_late=None,
+                            comment=None,
+                        )
+                        index += 1
                 row_idx += 1
             idx = row_idx

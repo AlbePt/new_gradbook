@@ -44,6 +44,22 @@ def make_file(path: Path) -> None:
     df.to_excel(path, header=False, index=False)
 
 
+def make_multi_file(path: Path) -> None:
+    """File containing multiple grades in one cell."""
+    df = pd.DataFrame(
+        [
+            ["Учебный год: 2024/2025", None, None, None],
+            ["Класс: 1A", None, None, None],
+            ["Период с 01.09.2024 по 03.09.2024", None, None, None],
+            ["Ученик: Kid", None, None, None],
+            ["Предмет", "сентябрь", "сентябрь", "сентябрь"],
+            ["", 1, 2, 3],
+            ["Math", "4/3", "О 2", ""],
+        ]
+    )
+    df.to_excel(path, header=False, index=False)
+
+
 def test_progress_report_parser(tmp_path):
     file = tmp_path / "report.xlsx"
     make_file(file)
@@ -72,3 +88,16 @@ def test_progress_report_parser(tmp_path):
     history = rows[3]
     assert history.subject_name == "History"
     assert history.attendance_status == "sick"
+
+
+def test_parser_multiple_grades(tmp_path):
+    file = tmp_path / "multi.xlsx"
+    make_multi_file(file)
+    parser = ProgressReportParser(str(file))
+    rows = list(parser.parse())
+    # 4 rows: two grades for day1 and late+grade for day2
+    assert len(rows) == 4
+    grades = [r for r in rows if r.grade_value is not None]
+    assert [g.grade_value for g in grades] == [4, 3, 2]
+    statuses = [r.attendance_status for r in rows if r.attendance_status]
+    assert statuses == ["late"]
