@@ -155,6 +155,27 @@ class ImportService:
             .delete(synchronize_session=False)
         )
 
+    def _delete_period_grades(
+        self, keys: Sequence[tuple[int, int, TermTypeEnum, int, GradeKindEnum]]
+    ) -> None:
+        """Remove non-regular grades for specific period combinations."""
+        if not keys:
+            return
+        (
+            self.db.query(Grade)
+            .filter(
+                tuple_(
+                    Grade.student_id,
+                    Grade.subject_id,
+                    Grade.term_type,
+                    Grade.term_index,
+                    Grade.grade_kind,
+                ).in_(keys)
+            )
+            .filter(Grade.grade_kind != GradeKindEnum.regular)
+            .delete(synchronize_session=False)
+        )
+
     def _upsert_grades(self, grades: Sequence[GradeCreate]) -> ImportSummary:
         summary = ImportSummary()
         if not grades:
@@ -167,6 +188,14 @@ class ImportService:
         }
         if pairs:
             self._delete_event_grades(list(pairs))
+
+        period_keys = {
+            (g.student_id, g.subject_id, g.term_type, g.term_index, g.grade_kind)
+            for g in grades
+            if g.grade_kind != GradeKindEnum.regular
+        }
+        if period_keys:
+            self._delete_period_grades(list(period_keys))
 
         items = {}
         for g in grades:
