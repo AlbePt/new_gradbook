@@ -171,3 +171,48 @@ def test_period_lookup(tmp_path):
         assert db_grade.term_index == 2
         assert db_grade.term_type == TermTypeEnum.quarter
         session.close()
+
+
+def test_regular_grade_overwrite(tmp_path):
+    """Importing a regular grade should replace existing event grades."""
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        _, _, _, d, _ev_id, _ = prepare(session)
+
+        first = ParsedRow(
+            student_name="Kid",
+            class_name="1A",
+            academic_year_name="2024/2025",
+            subject_name="Math",
+            teacher_name="T",
+            lesson_date=d,
+            grade_value=5,
+            grade_kind="regular",
+            term_type="year",
+            term_index=1,
+        )
+        svc = ImportService(session)
+        svc.import_items([first])
+
+        second = ParsedRow(
+            student_name="Kid",
+            class_name="1A",
+            academic_year_name="2024/2025",
+            subject_name="Math",
+            teacher_name="T",
+            lesson_date=d,
+            grade_value=4,
+            grade_kind="regular",
+            term_type="year",
+            term_index=2,
+        )
+        svc.import_items([second])
+
+        grades = session.query(Grade).all()
+        assert len(grades) == 1
+        assert grades[0].term_index == 2
+        assert grades[0].value == 4
+        session.close()

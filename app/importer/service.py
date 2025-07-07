@@ -140,10 +140,33 @@ class ImportService:
             .delete(synchronize_session=False)
         )
 
+    def _delete_event_grades(
+        self, pairs: Sequence[tuple[int, int]]
+    ) -> None:
+        """Delete regular grades for specific student/event pairs."""
+        if not pairs:
+            return
+        (
+            self.db.query(Grade)
+            .filter(
+                tuple_(Grade.student_id, Grade.lesson_event_id).in_(pairs)
+            )
+            .filter(Grade.grade_kind == GradeKindEnum.regular)
+            .delete(synchronize_session=False)
+        )
+
     def _upsert_grades(self, grades: Sequence[GradeCreate]) -> ImportSummary:
         summary = ImportSummary()
         if not grades:
             return summary
+
+        pairs = {
+            (g.student_id, g.lesson_event_id)
+            for g in grades
+            if g.grade_kind == GradeKindEnum.regular
+        }
+        if pairs:
+            self._delete_event_grades(list(pairs))
 
         items = {}
         for g in grades:
