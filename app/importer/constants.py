@@ -6,8 +6,19 @@ STATUS_CHAR_MAP = {
 }
 
 
+import re
+
+
 def split_cell(value: str) -> list[str]:
-    return [part.strip() for part in str(value).split("/") if part and part.strip()]
+    """Return list of parts from a cell value.
+
+    The original implementation only split on ``/`` which meant values like
+    ``"О 2"`` were parsed as a single token. We now split on both ``/`` and
+    whitespace so that mixed values are handled correctly.
+    """
+
+    parts = re.split(r"[\s/]+", str(value))
+    return [part.strip() for part in parts if part and part.strip()]
 
 
 from dataclasses import dataclass, field
