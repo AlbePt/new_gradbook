@@ -72,4 +72,10 @@ def resolve_or_create_student(
         )
         db.add(student)
         db.flush([student])
+    else:
+        # update class info if student moved to a different class
+        if student.class_id != class_id:
+            student.class_id = class_id
+            student.class_name = class_name
+            db.flush([student])
     return student.id
