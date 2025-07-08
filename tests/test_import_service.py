@@ -254,3 +254,36 @@ def test_repeat_import_reuses_event(tmp_path):
         assert events[0].id == ev_id
         assert grades[0].lesson_event_id == ev_id
         session.close()
+
+
+def test_student_class_update(tmp_path):
+    """Student should be moved to a new class if report uses another class name."""
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        prepare(session)
+
+        row = ParsedRow(
+            student_name="Kid",
+            class_name="2A",
+            academic_year_name="2024/2025",
+            subject_name="Math",
+            teacher_name="T",
+            lesson_date=date(2024, 9, 10),
+            grade_value=5,
+            grade_kind="regular",
+            term_type="year",
+            term_index=1,
+        )
+        svc = ImportService(session)
+        svc.import_items([row])
+
+        students = session.query(Student).all()
+        assert len(students) == 1
+        student = students[0]
+        cls = session.query(Class).filter_by(name="2A").one()
+        assert student.class_id == cls.id
+        assert student.class_name == "2A"
+        session.close()
