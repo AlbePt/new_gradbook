@@ -1,11 +1,26 @@
 # backend/models/lesson_event.py
-from sqlalchemy import Column, BigInteger, Integer, Date, SmallInteger, ForeignKey, TIMESTAMP, text
+from sqlalchemy import (
+    Column,
+    BigInteger,
+    Integer,
+    Date,
+    SmallInteger,
+    ForeignKey,
+    TIMESTAMP,
+    text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 from core.db import Base
 
 
 class LessonEvent(Base):
     __tablename__ = "lesson_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "subject_id", "class_id", "lesson_date", "lesson_index"
+        ),
+    )
 
     id = Column(BigInteger, primary_key=True, index=True)
     subject_id = Column(Integer, ForeignKey("subjects.id", ondelete="RESTRICT"), nullable=False)

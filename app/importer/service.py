@@ -8,6 +8,7 @@ import structlog
 from pydantic import BaseModel
 
 from sqlalchemy import tuple_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -113,7 +114,13 @@ class ImportService:
                 lesson_index=lesson_index,
             )
             self.db.add(event)
-            self.db.flush([event])
+            try:
+                self.db.flush([event])
+            except IntegrityError:
+                self.db.rollback()
+                event = query.first()
+                if event is None:
+                    raise
         return event.id
 
     def _clear_regular_grades(
