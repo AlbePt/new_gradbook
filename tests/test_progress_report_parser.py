@@ -22,6 +22,7 @@ from app.importer.progress_report_parser import ProgressReportParser
 from app.importer.base import ParsedRow
 from models.grade import GradeKindEnum
 
+
 def make_file(path: Path) -> None:
     """Create a small XLSX file emulating the real ``Отчёт`` format."""
     df = pd.DataFrame(
@@ -55,6 +56,18 @@ def make_multi_file(path: Path) -> None:
             ["Предмет", "сентябрь", "сентябрь", "сентябрь"],
             ["", 1, 2, 3],
             ["Math", "4/3", "О 2", ""],
+        ]
+    )
+    df.to_excel(path, header=False, index=False)
+
+
+def make_single_period_file(path: Path) -> None:
+    """Minimal file for single-table format."""
+    df = pd.DataFrame(
+        [
+            ["Учебный год: 2025/2026", None, None],
+            ["Класс: 2A", None, None],
+            ["Период с 05.09.2025 по 07.09.2025", None, None],
         ]
     )
     df.to_excel(path, header=False, index=False)
@@ -101,3 +114,25 @@ def test_parser_multiple_grades(tmp_path):
     assert [g.grade_value for g in grades] == [4, 3, 2]
     statuses = [r.attendance_status for r in rows if r.attendance_status]
     assert statuses == ["late"]
+
+
+def test_get_class_period_multi(tmp_path):
+    file = tmp_path / "period.xlsx"
+    make_file(file)
+    parser = ProgressReportParser(str(file))
+    cls, year, start, end = parser.get_class_period()
+    assert cls == "1A"
+    assert year == "2024/2025"
+    assert start == date(2024, 9, 1)
+    assert end == date(2024, 9, 2)
+
+
+def test_get_class_period_single(tmp_path):
+    file = tmp_path / "single.xlsx"
+    make_single_period_file(file)
+    parser = ProgressReportParser(str(file))
+    cls, year, start, end = parser.get_class_period()
+    assert cls == "2A"
+    assert year == "2025/2026"
+    assert start == date(2025, 9, 5)
+    assert end == date(2025, 9, 7)

@@ -22,7 +22,7 @@ os.environ.setdefault("DB_USER", "user")
 os.environ.setdefault("DB_PASSWORD", "pass")
 
 from app.importer.service import ImportService
-from app.importer.base import ParsedRow
+from app.importer.base import ParsedRow, BaseParser
 from models import (
     AcademicYear,
     AcademicPeriod,
@@ -135,22 +135,24 @@ def test_period_lookup(tmp_path):
         Session = sessionmaker(bind=engine)
         session = Session()
         _, _, _, _d, _ev, ay_id = prepare(session)
-        session.add_all([
-            AcademicPeriod(
-                academic_year_id=ay_id,
-                term_type=TermTypeEnum.quarter,
-                term_index=1,
-                start_date=date(2024, 9, 1),
-                end_date=date(2024, 10, 31),
-            ),
-            AcademicPeriod(
-                academic_year_id=ay_id,
-                term_type=TermTypeEnum.quarter,
-                term_index=2,
-                start_date=date(2024, 11, 1),
-                end_date=date(2024, 12, 31),
-            ),
-        ])
+        session.add_all(
+            [
+                AcademicPeriod(
+                    academic_year_id=ay_id,
+                    term_type=TermTypeEnum.quarter,
+                    term_index=1,
+                    start_date=date(2024, 9, 1),
+                    end_date=date(2024, 10, 31),
+                ),
+                AcademicPeriod(
+                    academic_year_id=ay_id,
+                    term_type=TermTypeEnum.quarter,
+                    term_index=2,
+                    start_date=date(2024, 11, 1),
+                    end_date=date(2024, 12, 31),
+                ),
+            ]
+        )
         session.commit()
 
         row = ParsedRow(
@@ -286,4 +288,55 @@ def test_student_class_update(tmp_path):
         cls = session.query(Class).filter_by(name="2A").one()
         assert student.class_id == cls.id
         assert student.class_name == "2A"
+        session.close()
+
+
+def test_import_from_parser_clears_regular_grades(tmp_path):
+    """Existing regular grades should be removed when period info is provided."""
+    with testing.postgresql.Postgresql() as pg:
+        run_migrations(pg.url())
+        engine = create_engine(pg.url())
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        _, _, _, d, _ev_id, _ = prepare(session)
+
+        first = ParsedRow(
+            student_name="Kid",
+            class_name="1A",
+            academic_year_name="2024/2025",
+            subject_name="Math",
+            teacher_name="T",
+            lesson_date=d,
+            grade_value=3,
+            grade_kind="regular",
+            term_type="year",
+            term_index=1,
+        )
+        svc = ImportService(session)
+        svc.import_items([first])
+
+        class DummyParser(BaseParser):
+            def parse(self_inner):
+                yield ParsedRow(
+                    student_name="Kid",
+                    class_name="1A",
+                    academic_year_name="2024/2025",
+                    subject_name="Math",
+                    teacher_name="T",
+                    lesson_date=date(2024, 9, 11),
+                    grade_value=5,
+                    grade_kind="regular",
+                    term_type="year",
+                    term_index=1,
+                )
+
+            def get_class_period(self_inner):
+                return "1A", "2024/2025", date(2024, 9, 1), date(2024, 9, 30)
+
+        svc.import_from_parser(DummyParser())
+
+        grades = session.query(Grade).order_by(Grade.date).all()
+        assert len(grades) == 1
+        assert grades[0].value == 5
+        assert grades[0].date == date(2024, 9, 11)
         session.close()
