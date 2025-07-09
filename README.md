@@ -29,12 +29,11 @@
   - Предметов (`/subjects`)
   - Классов (`/classes`)
   - Назначений “преподаватель–предмет” (`/teacher-subjects`)
-  - Администраторов (`/administrators`)
   - Оценок (`/grades`)
   - Посещаемости (`/attendance`)
   - Расписаний (`/schedules`)
 - Роуты FastAPI с Pydantic-схемами (валидация входящих данных, формирование ответов).
-- Хранение паролей администраторов через `bcrypt` (Passlib).
+- Хранение паролей пользователей через `bcrypt` (Passlib).
 - Модели SQLAlchemy с миграциями Alembic (создание/обратное откатывание таблиц).
 
 ---
@@ -121,7 +120,7 @@
 
 ## Аутентификация
 
-Добавлены эндпоинты `/auth/register` и `/auth/login` для регистрации пользователей и получения JWT токена. В теле запроса при регистрации нужно указать `username`, `password` и `role` (superuser, administrator, teacher, student, parent).
+Добавлены эндпоинты `/auth/register` и `/auth/login` для регистрации пользователей и получения JWT токена. В теле запроса при регистрации нужно указать `username`, `password` и `role` (superuser, administrator, teacher, student, parent). Администраторы создаются так же, указывая роль `administrator`, либо через `/users` с этой ролью.
 
 Подробные эскизы интерфейса представлены в [docs/wireframes.md](docs/wireframes.md).
 

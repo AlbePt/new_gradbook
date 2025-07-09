@@ -116,14 +116,6 @@ This document summarizes the SQLAlchemy models used in the backend.
   - `academic_year_id` – FK to `academic_years.id` (CASCADE)
 - **Relationships:** belongs to `Student` and `AcademicYear`.
 
-## Administrators
-- **Table:** `administrators`
-- **Columns:**
-  - `id` – primary key
-  - `name`
-  - `login` – unique
-  - `password_hash`
-  - `rights`
 
 ## Classes
 - **Table:** `classes`
@@ -166,6 +158,8 @@ This document summarizes the SQLAlchemy models used in the backend.
   - `username` – unique
   - `password_hash`
   - `role` – Enum `RoleEnum`
+
+Administrators are represented in this table by users with role `administrator`.
 
 ### Enumerations
 - **RoleEnum:** defines user roles (`superuser`, `administrator`, `teacher`, `student`, `parent`).
