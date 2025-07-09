@@ -12,7 +12,18 @@ if str(ROOT_DIR) not in sys.path:
 from core.db import engine, Base
 
 # Импорт моделей для регистрации в metadata
-from models import student, teacher, subject, teacher_subject, parent, grade, schedule, attendance, administrator, user  # noqa
+from models import (
+    student,
+    teacher,
+    subject,
+    teacher_subject,
+    parent,
+    grade,
+    schedule,
+    attendance,
+    administrator,
+    user,
+)  # noqa
 
 # Импорт роутеров
 from routers.student_router import router as student_router
@@ -25,7 +36,6 @@ from routers.schedule_router import router as schedule_router
 from routers.class_router import router as class_router
 from routers.class_teacher_router import router as class_teacher_router
 from routers.attendance_router import router as attendance_router
-from routers.administrator_router import router as administrator_router
 from routers.region_router import router as region_router
 from routers.city_router import router as city_router
 from routers.school_router import router as school_router
@@ -37,7 +47,7 @@ from app.import_teachers.router import router as import_teachers_router
 from app.importer.router import router as importer_router
 
 
-from fastapi.middleware.cors import CORSMiddleware 
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI(title="Gradebook API")
@@ -62,7 +72,6 @@ app.include_router(schedule_router)
 app.include_router(class_router)
 app.include_router(class_teacher_router)
 app.include_router(attendance_router)
-app.include_router(administrator_router)
 app.include_router(region_router)
 app.include_router(city_router)
 app.include_router(school_router)
