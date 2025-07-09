@@ -32,7 +32,6 @@ from models import (
     grade,
     schedule,
     attendance,
-    administrator,
     user,
 )  # noqa
 
