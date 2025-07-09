@@ -1,5 +1,8 @@
 # backend/core/config.py
-from pydantic_settings import BaseSettings
+try:
+    from pydantic_settings import BaseSettings
+except ModuleNotFoundError:  # fallback for Pydantic v1
+    from pydantic import BaseSettings
 from pydantic import Field
 
 
