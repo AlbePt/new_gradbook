@@ -122,6 +122,27 @@
 
 Добавлены эндпоинты `/auth/register` и `/auth/login` для регистрации пользователей и получения JWT токена. В теле запроса при регистрации нужно указать `username`, `password` и `role` (superuser, administrator, teacher, student, parent). Администраторы создаются так же, указывая роль `administrator`, либо через `/users` с этой ролью.
 
+Пример базовой последовательности действий:
+
+1. Зарегистрируйте администратора через `/auth/register`:
+   ```bash
+   curl -X POST http://localhost:8000/auth/register \
+        -H "Content-Type: application/json" \
+        -d '{"username": "admin", "password": "secret", "role": "administrator"}'
+   ```
+
+2. Получите токен, выполнив `/auth/login`:
+   ```bash
+   curl -X POST http://localhost:8000/auth/login \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d 'username=admin&password=secret'
+   ```
+
+3. Передавайте токен в заголовке `Authorization: Bearer` при запросах к защищённым эндпоинтам:
+   ```bash
+   curl -H "Authorization: Bearer <ACCESS_TOKEN>" http://localhost:8000/users
+   ```
+
 Подробные эскизы интерфейса представлены в [docs/wireframes.md](docs/wireframes.md).
 
 ## Импорт отчётов
