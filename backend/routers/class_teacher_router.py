@@ -1,11 +1,17 @@
 # backend/routers/class_teacher_router.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+
 from core.db import get_db
 from schemas.class_teacher import ClassTeacherCreate, ClassTeacherRead
 from repositories.class_teacher_repository import ClassTeacherRepository
+from utils.dependencies import administrator_required
 
-router = APIRouter(prefix="/class-teachers", tags=["class_teachers"])
+router = APIRouter(
+    prefix="/class-teachers",
+    tags=["class_teachers"],
+    dependencies=[Depends(administrator_required)],
+)
 
 
 @router.post("/", response_model=ClassTeacherRead)
