@@ -1,5 +1,12 @@
 # backend/main.py
-from fastapi import FastAPI
+"""Main entrypoint for the FastAPI application.
+
+This file is designed to be executed either from the project root
+(`uvicorn backend.main:app`) or from within the ``backend`` directory
+(`uvicorn main:app`). To ensure imports such as ``app`` work in both
+scenarios, the project root is added to ``sys.path`` before other
+imports occur.
+"""
 
 # Ensure project root is in the import path when running from ``backend``
 import sys
@@ -7,7 +14,11 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
-    sys.path.append(str(ROOT_DIR))
+    sys.path.insert(0, str(ROOT_DIR))
+
+from fastapi import FastAPI
+
+from core.db import engine, Base
 
 from core.db import engine, Base
 
