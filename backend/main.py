@@ -65,7 +65,10 @@ app = FastAPI(title="Gradebook API")
 # Добавить CORS middleware перед регистрацией роутеров
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Разрешить фронтенд
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
