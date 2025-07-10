@@ -5,9 +5,9 @@ from core.db import get_db
 from schemas.user import UserCreate, UserRead
 from repositories.user_repository import UserRepository
 from utils.utils import hash_password
-from utils.dependencies import superuser_required
+from utils.dependencies import admin_or_superuser_required
 
-router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(superuser_required)])
+router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(admin_or_superuser_required)])
 
 @router.post("/", response_model=UserRead)
 def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
@@ -26,9 +26,9 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     return user
 
 @router.get("/", response_model=list[UserRead])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_users(skip: int = 0, limit: int = 100, school_id: int | None = None, db: Session = Depends(get_db)):
     repo = UserRepository(db)
-    return repo.get_all(skip, limit)
+    return repo.get_all(skip, limit, school_id)
 
 @router.delete("/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):

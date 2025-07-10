@@ -4,6 +4,7 @@ from models.user import RoleEnum
 class UserBase(BaseModel):
     username: str
     role: RoleEnum
+    school_id: int | None = None
 
 class UserCreate(UserBase):
     password: str

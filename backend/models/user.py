@@ -1,5 +1,6 @@
 import enum
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey
+from sqlalchemy.orm import relationship
 from core.db import Base
 
 class RoleEnum(str, enum.Enum):
@@ -16,4 +17,7 @@ class User(Base):
     username = Column(String(50), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     role = Column(Enum(RoleEnum), nullable=False)
+    school_id = Column(Integer, ForeignKey('schools.id', ondelete='CASCADE'), nullable=True)
+
+    school = relationship('School', back_populates='users')
 
