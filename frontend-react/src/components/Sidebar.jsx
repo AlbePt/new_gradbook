@@ -2,8 +2,7 @@ import React from 'react'
 
 function Sidebar() {
   return (
-    <aside id="sidebar" className="sidebar offcanvas-lg offcanvas-start text-bg-dark flex-shrink-0 p-3" tabIndex="-1">
-      <div className="offcanvas-body">
+    <aside className="sidebar text-bg-dark flex-shrink-0 p-3">
         <a href="#" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
           <i className="bi bi-speedometer2 me-2 fs-4"></i>
           <span className="fs-5">Навигация</span>
@@ -18,7 +17,6 @@ function Sidebar() {
         </ul>
         <hr />
         <small className="text-white-50">v0.1.0 • 2025</small>
-      </div>
     </aside>
   )
 }

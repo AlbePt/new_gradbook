@@ -10,7 +10,7 @@ function LoginPane({ onLogin }) {
   }
 
   return (
-    <div>
+    <div id="loginPane">
       <h3 className="mb-3">Вход</h3>
       <form onSubmit={submit} className="row g-3" style={{ maxWidth: 300 }}>
         <div className="col-12">
