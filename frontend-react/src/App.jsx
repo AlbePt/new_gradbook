@@ -36,10 +36,12 @@ function App() {
   return (
     <>
       <Navbar onLogout={logout} />
-      <div className="d-flex" style={{ marginTop: '56px' }}>
+      <div className="d-flex">
         <Sidebar />
-        <main className="flex-grow-1 p-4">
-          {!token ? <LoginPane onLogin={login} /> : <Dashboard token={token} />}
+        <main className="flex-grow-1">
+          <div className="container-fluid py-4">
+            {!token ? <LoginPane onLogin={login} /> : <Dashboard token={token} />}
+          </div>
         </main>
       </div>
     </>

@@ -61,33 +61,33 @@ function Dashboard({ token }) {
       </ul>
       <div className="tab-content">
         <div className="tab-pane fade show active" id="crPane" role="tabpanel">
-          <div className="row g-4 mb-4" id="kpiCards">
-            <div className="col-6 col-lg-3">
-              <div className="card shadow-sm border-0">
+          <div className="row row-cols-2 row-cols-lg-4 g-4 mb-4" id="kpiCards">
+            <div className="col">
+              <div className="card h-100 shadow-sm border-0">
                 <div className="card-body">
                   <h6 className="card-title text-muted">Средний балл</h6>
                   <h3 className="fw-bold mb-0" id="avgGrade">{stats.avg}</h3>
                 </div>
               </div>
             </div>
-            <div className="col-6 col-lg-3">
-              <div className="card shadow-sm border-0">
+            <div className="col">
+              <div className="card h-100 shadow-sm border-0">
                 <div className="card-body">
                   <h6 className="card-title text-muted">Отличники</h6>
                   <h3 className="fw-bold mb-0" id="excellentCount">{stats.excellent}</h3>
                 </div>
               </div>
             </div>
-            <div className="col-6 col-lg-3">
-              <div className="card shadow-sm border-0">
+            <div className="col">
+              <div className="card h-100 shadow-sm border-0">
                 <div className="card-body">
                   <h6 className="card-title text-muted">Неуспевающие</h6>
                   <h3 className="fw-bold mb-0 text-danger" id="failingCount">{stats.failing}</h3>
                 </div>
               </div>
             </div>
-            <div className="col-6 col-lg-3">
-              <div className="card shadow-sm border-0">
+            <div className="col">
+              <div className="card h-100 shadow-sm border-0">
                 <div className="card-body">
                   <h6 className="card-title text-muted">Пропуски (%)</h6>
                   <h3 className="fw-bold mb-0" id="absencePercent">–</h3>
