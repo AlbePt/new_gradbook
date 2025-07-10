@@ -2,88 +2,64 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-function calcStats(grades) {
-  let sum = 0
-  const byStudent = {}
-  for (const g of grades) {
-    const v = parseFloat(g.value)
-    sum += v
-    byStudent[g.student_id] = (byStudent[g.student_id] || []).concat(v)
-  }
-  const avg = grades.length ? (sum / grades.length).toFixed(2) : '–'
-  let excellent = 0
-  let failing = 0
-  Object.values(byStudent).forEach(arr => {
-    const avgG = arr.reduce((a,b)=>a+b,0)/arr.length
-    if (avgG >= 4.5) excellent++
-    if (avgG < 3) failing++
-  })
-  return { avg, excellent, failing }
-}
 
-function Dashboard({ token }) {
+function Dashboard({ token, schoolId }) {
   const [stats, setStats] = useState({ avg: '–', excellent: '–', failing: '–' })
-  const [grades, setGrades] = useState([])
-  const [students, setStudents] = useState([])
+  const [academicYears, setAcademicYears] = useState([])
+  const [classes, setClasses] = useState([])
+  const [selectedYear, setSelectedYear] = useState('')
   const [selectedClass, setSelectedClass] = useState('all')
   const [selectedQuarter, setSelectedQuarter] = useState('all')
 
   const classOptions = useMemo(() => {
-    const uniq = {}
-    students.forEach(s => {
-      uniq[s.class_id] = s.class_name
-    })
-    return Object.entries(uniq).map(([id, name]) => ({ id, name }))
-  }, [students])
+    return classes.map(c => ({ id: c.id, name: c.name }))
+  }, [classes])
 
   useEffect(() => {
-    async function fetchGrades() {
-      const res = await fetch(`${API_URL}/grades`, {
+    async function fetchYears() {
+      const res = await fetch(`${API_URL}/academic-years`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      if (!res.ok) throw new Error('Failed to fetch grades')
-      return await res.json()
-    }
-
-    async function fetchStudents() {
-      const res = await fetch(`${API_URL}/students`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (!res.ok) throw new Error('Failed to fetch students')
-      return await res.json()
-    }
-
-    async function update() {
-      try {
-        const [g, s] = await Promise.all([fetchGrades(), fetchStudents()])
-        setGrades(g)
-        setStudents(s)
-      } catch (e) {
-        console.error(e)
+      if (res.ok) {
+        const data = await res.json()
+        setAcademicYears(data)
+        if (data.length && !selectedYear) {
+          setSelectedYear(String(data[0].id))
+        }
       }
     }
-
-    update()
+    if (token) fetchYears()
   }, [token])
 
   useEffect(() => {
-    if (!grades.length) return
-    const studentMap = {}
-    students.forEach(s => {
-      studentMap[s.id] = s
-    })
-    const filtered = grades.filter(g => {
-      if (selectedQuarter !== 'all') {
-        if (g.term_type !== 'quarter' || String(g.term_index) !== selectedQuarter) return false
+    if (!schoolId || !selectedYear) { setClasses([]); return }
+    async function fetchClasses() {
+      const res = await fetch(`${API_URL}/classes?school_id=${schoolId}&academic_year_id=${selectedYear}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        setClasses(await res.json())
       }
-      if (selectedClass !== 'all') {
-        const st = studentMap[g.student_id]
-        if (!st || String(st.class_id) !== selectedClass) return false
+    }
+    fetchClasses()
+  }, [schoolId, selectedYear, token])
+
+  useEffect(() => {
+    if (!schoolId || !selectedYear) return
+    async function fetchStats() {
+      let url = `${API_URL}/stats/average-grade?school_id=${schoolId}&academic_year_id=${selectedYear}`
+      if (selectedClass !== 'all') url += `&class_id=${selectedClass}`
+      if (selectedQuarter !== 'all') url += `&quarter=${selectedQuarter}`
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) {
+        const data = await res.json()
+        setStats({ avg: data.average ? Number(data.average).toFixed(2) : '–', excellent: '–', failing: '–' })
       }
-      return true
-    })
-    setStats(calcStats(filtered))
-  }, [grades, students, selectedClass, selectedQuarter])
+    }
+    fetchStats()
+  }, [schoolId, selectedYear, selectedClass, selectedQuarter, token])
+
+  
 
   return (
     <div id="contentPane">
@@ -104,6 +80,13 @@ function Dashboard({ token }) {
       <div className="tab-content">
         <div className="tab-pane fade show active" id="crPane" role="tabpanel">
           <div className="row g-3 mb-3">
+            <div className="col-auto">
+              <select className="form-select" value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
+                {academicYears.map(y => (
+                  <option key={y.id} value={y.id}>{y.name}</option>
+                ))}
+              </select>
+            </div>
             <div className="col-auto">
               <select className="form-select" value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
                 <option value="all">Все классы</option>

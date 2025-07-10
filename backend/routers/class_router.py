@@ -26,9 +26,15 @@ def read_class(class_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[ClassRead])
-def read_classes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_classes(
+    skip: int = 0,
+    limit: int = 100,
+    school_id: int | None = None,
+    academic_year_id: int | None = None,
+    db: Session = Depends(get_db),
+):
     repo = ClassRepository(db)
-    return repo.get_all(skip, limit)
+    return repo.get_all(skip, limit, school_id=school_id, academic_year_id=academic_year_id)
 
 
 @router.put("/{class_id}", response_model=ClassRead)

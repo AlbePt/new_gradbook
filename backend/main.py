@@ -55,6 +55,7 @@ from routers.user_router import router as user_router
 from routers.auth_router import router as auth_router
 from app.import_teachers.router import router as import_teachers_router
 from app.importer.router import router as importer_router
+from routers.stats_router import router as stats_router
 
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -94,6 +95,7 @@ app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(import_teachers_router)
 app.include_router(importer_router)
+app.include_router(stats_router)
 
 # При необходимости создания таблиц без миграций
 # Base.metadata.create_all(bind=engine)

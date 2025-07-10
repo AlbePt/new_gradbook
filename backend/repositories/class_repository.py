@@ -11,8 +11,19 @@ class ClassRepository:
     def get(self, class_id: int) -> Class:
         return self.db.query(Class).filter(Class.id == class_id).first()
 
-    def get_all(self, skip: int = 0, limit: int = 100):
-        return self.db.query(Class).offset(skip).limit(limit).all()
+    def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        school_id: int | None = None,
+        academic_year_id: int | None = None,
+    ):
+        query = self.db.query(Class)
+        if school_id is not None:
+            query = query.filter(Class.school_id == school_id)
+        if academic_year_id is not None:
+            query = query.filter(Class.academic_year_id == academic_year_id)
+        return query.offset(skip).limit(limit).all()
 
     def create(self, school_class: ClassCreate) -> Class:
         db_class = Class(**school_class.dict())
