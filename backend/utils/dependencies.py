@@ -36,6 +36,14 @@ def require_role(role: RoleEnum):
         return user
     return role_checker
 
+def require_roles(roles: list[RoleEnum]):
+    def role_checker(user: User = Depends(get_current_user)):
+        if user.role not in roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        return user
+    return role_checker
+
 superuser_required = require_role(RoleEnum.superuser)
 administrator_required = require_role(RoleEnum.administrator)
+admin_or_superuser_required = require_roles([RoleEnum.superuser, RoleEnum.administrator])
 

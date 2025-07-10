@@ -3,6 +3,7 @@ import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
 import LoginPane from './components/LoginPane'
 import Dashboard from './components/Dashboard'
+import UserManagement from './components/UserManagement'
 import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -10,6 +11,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [schoolId, setSchoolId] = useState('')
+  const [page, setPage] = useState('dashboard')
 
   const login = async (username, password) => {
     const form = new URLSearchParams()
@@ -39,10 +41,16 @@ function App() {
     <>
       <Navbar onLogout={logout} />
       <div className="d-flex">
-        <Sidebar token={token} schoolId={schoolId} onSchoolChange={setSchoolId} />
+        <Sidebar token={token} schoolId={schoolId} onSchoolChange={setSchoolId} onSelect={setPage} />
         <main className="flex-grow-1">
           <div className="container-fluid py-4">
-            {!token ? <LoginPane onLogin={login} /> : <Dashboard token={token} schoolId={schoolId} />}
+            {!token ? (
+              <LoginPane onLogin={login} />
+            ) : page === 'settings' ? (
+              <UserManagement token={token} schoolId={schoolId} />
+            ) : (
+              <Dashboard token={token} schoolId={schoolId} />
+            )}
           </div>
         </main>
       </div>

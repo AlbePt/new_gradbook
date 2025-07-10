@@ -13,14 +13,22 @@ class UserRepository:
         return self.db.query(User).filter(User.username == username).first()
 
     def create(self, user_in: UserCreate, password_hash: str) -> User:
-        user = User(username=user_in.username, role=user_in.role, password_hash=password_hash)
+        user = User(
+            username=user_in.username,
+            role=user_in.role,
+            password_hash=password_hash,
+            school_id=user_in.school_id,
+        )
         self.db.add(user)
         self.db.commit()
         self.db.refresh(user)
         return user
 
-    def get_all(self, skip: int = 0, limit: int = 100):
-        return self.db.query(User).offset(skip).limit(limit).all()
+    def get_all(self, skip: int = 0, limit: int = 100, school_id: int | None = None):
+        query = self.db.query(User)
+        if school_id is not None:
+            query = query.filter(User.school_id == school_id)
+        return query.offset(skip).limit(limit).all()
 
     def delete(self, user_id: int) -> None:
         user = self.get(user_id)
