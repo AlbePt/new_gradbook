@@ -9,6 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
+  const [schoolId, setSchoolId] = useState('')
 
   const login = async (username, password) => {
     const form = new URLSearchParams()
@@ -31,16 +32,17 @@ function App() {
   const logout = () => {
     localStorage.removeItem('token')
     setToken(null)
+    setSchoolId('')
   }
 
   return (
     <>
       <Navbar onLogout={logout} />
       <div className="d-flex">
-        <Sidebar />
+        <Sidebar token={token} schoolId={schoolId} onSchoolChange={setSchoolId} />
         <main className="flex-grow-1">
           <div className="container-fluid py-4">
-            {!token ? <LoginPane onLogin={login} /> : <Dashboard token={token} />}
+            {!token ? <LoginPane onLogin={login} /> : <Dashboard token={token} schoolId={schoolId} />}
           </div>
         </main>
       </div>
