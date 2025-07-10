@@ -4,7 +4,7 @@ function Navbar({ onLogout }) {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
       <div className="container-fluid">
-        <button className="btn btn-outline-light d-lg-none me-2" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
+        <button className="btn btn-outline-light d-lg-none me-2" id="sidebarToggle">
           <i className="bi bi-list"></i>
         </button>
         <a className="navbar-brand" href="#"><i className="bi bi-journal-code me-2"></i>Gradebook</a>
