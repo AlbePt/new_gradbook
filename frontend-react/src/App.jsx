@@ -7,7 +7,7 @@ import Sidebar from './components/Sidebar';
 import LoginPane from './components/LoginPane';
 import Dashboard from './components/Dashboard';
 import UserManagement from './components/UserManagement';
-import './App.css';
+import PagePlaceholder from './components/PagePlaceholder';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -49,6 +49,7 @@ function App() {
           schoolId={schoolId}
           onSchoolChange={setSchoolId}
           onSelect={setPage}
+          current={page}
         />
         <main className="flex-grow-1">
           <div className="container-fluid py-4">
@@ -56,6 +57,8 @@ function App() {
               <LoginPane onLogin={login} />
             ) : page === 'settings' ? (
               <UserManagement token={token} schoolId={schoolId} />
+            ) : page === 'students' || page === 'subjects' || page === 'grades' ? (
+              <PagePlaceholder page={page} />
             ) : (
               <Dashboard token={token} schoolId={schoolId} />
             )}
