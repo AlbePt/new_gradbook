@@ -1,0 +1,42 @@
+@import 'tokens';
+
+$primary: var(--primary);
+$body-bg: var(--slate-50);
+$body-color: var(--slate-900);
+$link-color: $primary;
+
+$border-radius: var(--radius-md);
+$border-radius-sm: var(--radius-sm);
+
+@import 'bootstrap/scss/bootstrap';
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: $body-bg;
+  color: $body-color;
+}
+
+.sidebar {
+  width: 260px;
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+    display: none;
+  }
+  body.offcanvas-active .sidebar {
+    display: block;
+    position: fixed;
+    z-index: 1031;
+    height: 100vh;
+    overflow-y: auto;
+    left: 0;
+    top: 0;
+  }
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline-offset: 2px;
+  outline: 2px solid var(--primary);
+}
