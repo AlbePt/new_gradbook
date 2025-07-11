@@ -18,6 +18,7 @@ class UserRepository:
             role=user_in.role,
             password_hash=password_hash,
             school_id=user_in.school_id,
+            full_name=user_in.full_name,
         )
         self.db.add(user)
         self.db.commit()

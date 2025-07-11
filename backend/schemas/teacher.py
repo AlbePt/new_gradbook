@@ -6,6 +6,7 @@ class TeacherBase(BaseModel):
     full_name: str
     contact_info: Optional[str] = None
     school_id: int  # Новое поле
+    user_id: Optional[int] = None
 
 class TeacherCreate(TeacherBase):
     pass

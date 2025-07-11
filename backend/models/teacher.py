@@ -11,6 +11,7 @@ class Teacher(Base):
     full_name = Column(String(50), nullable=False)
     contact_info = Column(String(100), nullable=True)
     school_id = Column(Integer, ForeignKey('schools.id', ondelete='CASCADE'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True, unique=True)
     is_active = Column(Boolean, nullable=False, server_default='true')
 
     # Отношения
@@ -18,6 +19,7 @@ class Teacher(Base):
     grades = relationship('Grade', back_populates='teacher', cascade='all, delete-orphan')
     schedules = relationship('Schedule', back_populates='teacher', cascade='all, delete-orphan')
     school = relationship('School', back_populates='teachers')
+    user = relationship('User', back_populates='teacher')
     teacher_subjects = relationship(
         'TeacherSubject',
         back_populates='teacher',
