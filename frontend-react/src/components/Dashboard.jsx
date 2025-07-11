@@ -1,102 +1,161 @@
-import React, { useEffect, useMemo, useState } from 'react'
+/**
+ * Dashboard – statistics view with filters and KPI cards.
+ */
+import React, { useEffect, useMemo, useState } from 'react';
+import Card from './Card';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function Dashboard({ token, schoolId }) {
-  const [stats, setStats] = useState({ avg: '–', excellent: '–', failing: '–' })
-  const [academicYears, setAcademicYears] = useState([])
-  const [classes, setClasses] = useState([])
-  const [selectedYear, setSelectedYear] = useState('')
-  const [selectedClass, setSelectedClass] = useState('all')
-  const [selectedQuarter, setSelectedQuarter] = useState('all')
+  const [stats, setStats] = useState({ avg: '–', excellent: '–', failing: '–' });
+  const [academicYears, setAcademicYears] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedClass, setSelectedClass] = useState('all');
+  const [selectedQuarter, setSelectedQuarter] = useState('all');
 
   const classOptions = useMemo(() => {
-    return classes.map(c => ({ id: c.id, name: c.name }))
-  }, [classes])
+    return classes.map((c) => ({ id: c.id, name: c.name }));
+  }, [classes]);
 
   useEffect(() => {
     async function fetchYears() {
       const res = await fetch(`${API_URL}/academic-years`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.ok) {
-        const data = await res.json()
-        setAcademicYears(data)
+        const data = await res.json();
+        setAcademicYears(data);
         if (data.length && !selectedYear) {
-          setSelectedYear(String(data[0].id))
+          setSelectedYear(String(data[0].id));
         }
       }
     }
-    if (token) fetchYears()
-  }, [token])
+    if (token) fetchYears();
+  }, [token]);
 
   useEffect(() => {
-    if (!schoolId || !selectedYear) { setClasses([]); return }
+    if (!schoolId || !selectedYear) {
+      setClasses([]);
+      return;
+    }
     async function fetchClasses() {
-      const res = await fetch(`${API_URL}/classes?school_id=${schoolId}&academic_year_id=${selectedYear}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const res = await fetch(
+        `${API_URL}/classes?school_id=${schoolId}&academic_year_id=${selectedYear}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (res.ok) {
-        setClasses(await res.json())
+        setClasses(await res.json());
       }
     }
-    fetchClasses()
-  }, [schoolId, selectedYear, token])
+    fetchClasses();
+  }, [schoolId, selectedYear, token]);
 
   useEffect(() => {
-    if (!schoolId || !selectedYear) return
+    if (!schoolId || !selectedYear) return;
     async function fetchStats() {
-      let url = `${API_URL}/stats/average-grade?school_id=${schoolId}&academic_year_id=${selectedYear}`
-      if (selectedClass !== 'all') url += `&class_id=${selectedClass}`
-      if (selectedQuarter !== 'all') url += `&quarter=${selectedQuarter}`
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      let url = `${API_URL}/stats/average-grade?school_id=${schoolId}&academic_year_id=${selectedYear}`;
+      if (selectedClass !== 'all') url += `&class_id=${selectedClass}`;
+      if (selectedQuarter !== 'all') url += `&quarter=${selectedQuarter}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
-        const data = await res.json()
-        setStats({ avg: data.average ? Number(data.average).toFixed(2) : '–', excellent: '–', failing: '–' })
+        const data = await res.json();
+        setStats({
+          avg: data.average ? Number(data.average).toFixed(2) : '–',
+          excellent: '–',
+          failing: '–',
+        });
       }
     }
-    fetchStats()
-  }, [schoolId, selectedYear, selectedClass, selectedQuarter, token])
-
-  
+    fetchStats();
+  }, [schoolId, selectedYear, selectedClass, selectedQuarter, token]);
 
   return (
     <div id="contentPane">
       <ul className="nav nav-tabs mb-4" id="roleTabs" role="tablist">
         <li className="nav-item" role="presentation">
-          <button className="nav-link active" id="cr-tab" data-bs-toggle="tab" data-bs-target="#crPane" role="tab">Классные руководители</button>
+          <button
+            className="nav-link active"
+            id="cr-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#crPane"
+            role="tab"
+          >
+            Классные руководители
+          </button>
         </li>
         <li className="nav-item" role="presentation">
-          <button className="nav-link" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachersPane" role="tab">Педагоги</button>
+          <button
+            className="nav-link"
+            id="teachers-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#teachersPane"
+            role="tab"
+          >
+            Педагоги
+          </button>
         </li>
         <li className="nav-item" role="presentation">
-          <button className="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#adminPane" role="tab">Администрация</button>
+          <button
+            className="nav-link"
+            id="admin-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#adminPane"
+            role="tab"
+          >
+            Администрация
+          </button>
         </li>
         <li className="nav-item" role="presentation">
-          <button className="nav-link" id="ahc-tab" data-bs-toggle="tab" data-bs-target="#ahcPane" role="tab">АХЧ</button>
+          <button
+            className="nav-link"
+            id="ahc-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#ahcPane"
+            role="tab"
+          >
+            АХЧ
+          </button>
         </li>
       </ul>
       <div className="tab-content">
         <div className="tab-pane fade show active" id="crPane" role="tabpanel">
           <div className="row g-3 mb-3">
             <div className="col-auto">
-              <select className="form-select" value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
-                {academicYears.map(y => (
-                  <option key={y.id} value={y.id}>{y.name}</option>
+              <select
+                className="form-select"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                {academicYears.map((y) => (
+                  <option key={y.id} value={y.id}>
+                    {y.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="col-auto">
-              <select className="form-select" value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
+              <select
+                className="form-select"
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+              >
                 <option value="all">Все классы</option>
-                {classOptions.map(o => (
-                  <option key={o.id} value={o.id}>{o.name}</option>
+                {classOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="col-auto">
-              <select className="form-select" value={selectedQuarter} onChange={e => setSelectedQuarter(e.target.value)}>
+              <select
+                className="form-select"
+                value={selectedQuarter}
+                onChange={(e) => setSelectedQuarter(e.target.value)}
+              >
                 <option value="all">Весь год</option>
                 <option value="1">1 четверть</option>
                 <option value="2">2 четверть</option>
@@ -107,42 +166,38 @@ function Dashboard({ token, schoolId }) {
           </div>
           <div className="row row-cols-2 row-cols-lg-4 g-4 mb-4" id="kpiCards">
             <div className="col">
-              <div className="card h-100 shadow-sm border-0">
-                <div className="card-body">
-                  <h6 className="card-title text-muted">Средний балл</h6>
-                  <h3 className="fw-bold mb-0" id="avgGrade">{stats.avg}</h3>
-                </div>
-              </div>
+              <Card title="Средний балл">
+                <h3 className="fw-bold mb-0" id="avgGrade">
+                  {stats.avg}
+                </h3>
+              </Card>
             </div>
             <div className="col">
-              <div className="card h-100 shadow-sm border-0">
-                <div className="card-body">
-                  <h6 className="card-title text-muted">Отличники</h6>
-                  <h3 className="fw-bold mb-0" id="excellentCount">{stats.excellent}</h3>
-                </div>
-              </div>
+              <Card title="Отличники">
+                <h3 className="fw-bold mb-0" id="excellentCount">
+                  {stats.excellent}
+                </h3>
+              </Card>
             </div>
             <div className="col">
-              <div className="card h-100 shadow-sm border-0">
-                <div className="card-body">
-                  <h6 className="card-title text-muted">Неуспевающие</h6>
-                  <h3 className="fw-bold mb-0 text-danger" id="failingCount">{stats.failing}</h3>
-                </div>
-              </div>
+              <Card title="Неуспевающие">
+                <h3 className="fw-bold mb-0 text-danger" id="failingCount">
+                  {stats.failing}
+                </h3>
+              </Card>
             </div>
             <div className="col">
-              <div className="card h-100 shadow-sm border-0">
-                <div className="card-body">
-                  <h6 className="card-title text-muted">Пропуски (%)</h6>
-                  <h3 className="fw-bold mb-0" id="absencePercent">–</h3>
-                </div>
-              </div>
+              <Card title="Пропуски (%)">
+                <h3 className="fw-bold mb-0" id="absencePercent">
+                  –
+                </h3>
+              </Card>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Dashboard
+export default Dashboard;
