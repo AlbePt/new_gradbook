@@ -1,8 +1,10 @@
 @import 'tokens';
 
-$primary: var(--primary);
-$body-bg: var(--slate-50);
-$body-color: var(--slate-900);
+// Bootstrap's Sass functions can't work with CSS variables like `var(--primary)`.
+// Use explicit color values from the tokens to avoid compilation errors.
+$primary: #4338ca; // matches --indigo-700 defined in _tokens.scss
+$body-bg: #f8fafc; // matches --slate-50
+$body-color: #0f172a; // matches --slate-900
 $link-color: $primary;
 
 $border-radius: var(--radius-md);
