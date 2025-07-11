@@ -149,7 +149,7 @@ function UserManagement({ token, schoolId }) {
               <td>{u.username}</td>
               <td>{u.role}</td>
               <td>
-                <button className="btn btn-sm btn-danger" onClick={() => deleteUser(u.id)}>
+                <button className="btn danger btn-sm" onClick={() => deleteUser(u.id)}>
                   Удалить
                 </button>
               </td>
@@ -158,16 +158,16 @@ function UserManagement({ token, schoolId }) {
         </tbody>
       </DataTable>
       <div className="mb-3">
-        <button className="btn btn-primary me-2" onClick={() => setShowAdmin(true)}>
+        <button className="btn primary me-2" onClick={() => setShowAdmin(true)}>
           Добавить администратора
         </button>
-        <button className="btn btn-primary me-2" onClick={() => setShowTeacher(true)}>
+        <button className="btn primary me-2" onClick={() => setShowTeacher(true)}>
           Добавить учителя
         </button>
-        <button className="btn btn-secondary me-2" onClick={() => alert('В разработке')}>
+        <button className="btn primary me-2" disabled onClick={() => alert('В разработке')}>
           Добавить ученика
         </button>
-        <button className="btn btn-secondary" onClick={() => alert('В разработке')}>
+        <button className="btn primary" disabled onClick={() => alert('В разработке')}>
           Добавить родителя
         </button>
       </div>
@@ -212,10 +212,10 @@ function UserManagement({ token, schoolId }) {
                 </div>
               </div>
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowAdmin(false)}>
+                <button className="btn" onClick={() => setShowAdmin(false)}>
                   Отмена
                 </button>
-                <button className="btn btn-primary" onClick={createAdministrator}>
+                <button className="btn primary" onClick={createAdministrator}>
                   Добавить
                 </button>
               </div>
@@ -351,10 +351,10 @@ function UserManagement({ token, schoolId }) {
                 )}
               </div>
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowTeacher(false)}>
+                <button className="btn" onClick={() => setShowTeacher(false)}>
                   Отмена
                 </button>
-                <button className="btn btn-primary" onClick={createTeacher}>
+                <button className="btn primary" onClick={createTeacher}>
                   Добавить
                 </button>
               </div>

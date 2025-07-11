@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-function Sidebar({ token, schoolId, onSchoolChange, onSelect }) {
+function Sidebar({ token, schoolId, onSchoolChange, onSelect, current }) {
   const [schools, setSchools] = useState([]);
 
   useEffect(() => {
@@ -25,14 +25,9 @@ function Sidebar({ token, schoolId, onSchoolChange, onSelect }) {
   }, [token]);
 
   return (
-    <aside className="sidebar text-bg-dark flex-shrink-0 p-3">
-      <div className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white">
-        <i className="bi bi-speedometer2 me-2 fs-4"></i>
-        <select
-          className="form-select form-select-sm bg-dark text-white border-0"
-          value={schoolId || ''}
-          onChange={(e) => onSchoolChange(e.target.value)}
-        >
+    <aside className="sidebar">
+      <div className="school-select">
+        <select value={schoolId || ''} onChange={(e) => onSchoolChange(e.target.value)}>
           {schools.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
@@ -40,36 +35,29 @@ function Sidebar({ token, schoolId, onSchoolChange, onSelect }) {
           ))}
         </select>
       </div>
-      <hr />
-      <ul className="nav nav-pills flex-column mb-auto">
-        <li className="nav-item">
-          <a href="#" className="nav-link text-white active" onClick={() => onSelect('dashboard')}>
-            <i className="bi bi-bar-chart me-2"></i>Отчёты
-          </a>
+      <ul className="menu">
+        <li className={current === 'dashboard' ? 'active' : ''} onClick={() => onSelect('dashboard')}>
+          <i className="bi bi-bar-chart"></i>
+          <span>Отчёты</span>
         </li>
-        <li>
-          <a href="#" className="nav-link text-white" onClick={() => onSelect('students')}>
-            <i className="bi bi-people me-2"></i>Ученики
-          </a>
+        <li className={current === 'students' ? 'active' : ''} onClick={() => onSelect('students')}>
+          <i className="bi bi-people"></i>
+          <span>Ученики</span>
         </li>
-        <li>
-          <a href="#" className="nav-link text-white" onClick={() => onSelect('subjects')}>
-            <i className="bi bi-book me-2"></i>Предметы
-          </a>
+        <li className={current === 'subjects' ? 'active' : ''} onClick={() => onSelect('subjects')}>
+          <i className="bi bi-book"></i>
+          <span>Предметы</span>
         </li>
-        <li>
-          <a href="#" className="nav-link text-white" onClick={() => onSelect('grades')}>
-            <i className="bi bi-card-checklist me-2"></i>Оценки
-          </a>
+        <li className={current === 'grades' ? 'active' : ''} onClick={() => onSelect('grades')}>
+          <i className="bi bi-card-checklist"></i>
+          <span>Оценки</span>
         </li>
-        <li>
-          <a href="#" className="nav-link text-white" onClick={() => onSelect('settings')}>
-            <i className="bi bi-gear me-2"></i>Настройки
-          </a>
+        <li className={current === 'settings' ? 'active' : ''} onClick={() => onSelect('settings')}>
+          <i className="bi bi-gear"></i>
+          <span>Настройки</span>
         </li>
       </ul>
-      <hr />
-      <small className="text-white-50">v0.1.0 • 2025</small>
+      <footer className="version">v0.1.0 • 2025</footer>
     </aside>
   );
 }

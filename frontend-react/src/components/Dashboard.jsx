@@ -2,7 +2,6 @@
  * Dashboard – statistics view with filters and KPI cards.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import Card from './Card';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -164,34 +163,22 @@ function Dashboard({ token, schoolId }) {
               </select>
             </div>
           </div>
-          <div className="row row-cols-2 row-cols-lg-4 g-4 mb-4" id="kpiCards">
-            <div className="col">
-              <Card title="Средний балл">
-                <h3 className="fw-bold mb-0" id="avgGrade">
-                  {stats.avg}
-                </h3>
-              </Card>
+          <div className="cards">
+            <div className="card">
+              <h3>Средний балл</h3>
+              <p className="value" id="avgGrade">{stats.avg}</p>
             </div>
-            <div className="col">
-              <Card title="Отличники">
-                <h3 className="fw-bold mb-0" id="excellentCount">
-                  {stats.excellent}
-                </h3>
-              </Card>
+            <div className="card">
+              <h3>Отличники</h3>
+              <p className="value" id="excellentCount">{stats.excellent}</p>
             </div>
-            <div className="col">
-              <Card title="Неуспевающие">
-                <h3 className="fw-bold mb-0 text-danger" id="failingCount">
-                  {stats.failing}
-                </h3>
-              </Card>
+            <div className="card">
+              <h3>Неуспевающие</h3>
+              <p className="value text-danger" id="failingCount">{stats.failing}</p>
             </div>
-            <div className="col">
-              <Card title="Пропуски (%)">
-                <h3 className="fw-bold mb-0" id="absencePercent">
-                  –
-                </h3>
-              </Card>
+            <div className="card">
+              <h3>Пропуски (%)</h3>
+              <p className="value" id="absencePercent">–</p>
             </div>
           </div>
         </div>
