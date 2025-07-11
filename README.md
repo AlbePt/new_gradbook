@@ -175,6 +175,7 @@ uvicorn backend.main:app --reload
    ```
 
 Подробные эскизы интерфейса представлены в [docs/wireframes.md](docs/wireframes.md).
+Сценарий добавления пользователей описан в [docs/user_addition_scenario.md](docs/user_addition_scenario.md).
 
 ## Импорт отчётов
 
