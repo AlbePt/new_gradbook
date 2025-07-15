@@ -36,9 +36,34 @@ function Sidebar({ token, schoolId, onSchoolChange, onSelect, current }) {
         </select>
       </div>
       <ul className="menu">
-        <li className={current === 'dashboard' ? 'active' : ''} onClick={() => onSelect('dashboard')}>
-          <i className="bi bi-bar-chart"></i>
-          <span>Отчёты</span>
+        <li className="menu-header">Отчёты</li>
+        <li
+          className={`sub-item ${current === 'reports-cr' ? 'active' : ''}`}
+          onClick={() => onSelect('reports-cr')}
+        >
+          <i className="bi bi-person-video"></i>
+          <span>Классный руководитель</span>
+        </li>
+        <li
+          className={`sub-item ${current === 'reports-teachers' ? 'active' : ''}`}
+          onClick={() => onSelect('reports-teachers')}
+        >
+          <i className="bi bi-people"></i>
+          <span>Педагоги</span>
+        </li>
+        <li
+          className={`sub-item ${current === 'reports-admin' ? 'active' : ''}`}
+          onClick={() => onSelect('reports-admin')}
+        >
+          <i className="bi bi-building"></i>
+          <span>Администрация</span>
+        </li>
+        <li
+          className={`sub-item ${current === 'reports-ahc' ? 'active' : ''}`}
+          onClick={() => onSelect('reports-ahc')}
+        >
+          <i className="bi bi-tools"></i>
+          <span>АХЧ</span>
         </li>
         <li className={current === 'students' ? 'active' : ''} onClick={() => onSelect('students')}>
           <i className="bi bi-people"></i>

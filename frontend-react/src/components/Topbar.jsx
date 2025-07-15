@@ -9,7 +9,6 @@ function Topbar({ onLogout }) {
     <header className="topbar">
       <div className="navbar-left">
         <i className="bi bi-table" />
-        <span className="logo">Gradebook</span>
       </div>
       <div className="top-actions">
         <button className="search-btn" aria-label="Поиск">
