@@ -14,7 +14,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [schoolId, setSchoolId] = useState('');
-  const [page, setPage] = useState('dashboard');
+  const [page, setPage] = useState('reports-cr');
 
   const login = async (username, password) => {
     const form = new URLSearchParams();
@@ -56,11 +56,13 @@ function App() {
             {!token ? (
               <LoginPane onLogin={login} />
             ) : page === 'settings' ? (
-              <UserManagement token={token} schoolId={schoolId} />
+              <UserManagement token={token} schoolId={schoolId} onSchoolChange={setSchoolId} />
             ) : page === 'students' || page === 'subjects' || page === 'grades' ? (
               <PagePlaceholder page={page} />
+            ) : page.startsWith('reports') ? (
+              <Dashboard token={token} schoolId={schoolId} role={page.split('-')[1]} />
             ) : (
-              <Dashboard token={token} schoolId={schoolId} />
+              <PagePlaceholder page={page} />
             )}
           </div>
         </main>

@@ -6,11 +6,12 @@ import DataTable from './DataTable';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-function UserManagement({ token, schoolId }) {
+function UserManagement({ token, schoolId, onSchoolChange }) {
   const [users, setUsers] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [schools, setSchools] = useState([]);
 
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminForm, setAdminForm] = useState({ username: '', password: '', full_name: '' });
@@ -58,6 +59,13 @@ function UserManagement({ token, schoolId }) {
     if (res.ok) setClasses(await res.json());
   };
 
+  const loadSchools = async () => {
+    const res = await fetch(`${API_URL}/schools`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setSchools(await res.json());
+  };
+
   useEffect(() => {
     if (token && schoolId) {
       loadUsers();
@@ -68,6 +76,7 @@ function UserManagement({ token, schoolId }) {
 
   useEffect(() => {
     if (token) loadSubjects();
+    if (token) loadSchools();
   }, [token]);
 
   const createAdministrator = async () => {
@@ -132,6 +141,15 @@ function UserManagement({ token, schoolId }) {
 
   return (
     <div>
+      <div className="mb-3" style={{ maxWidth: '300px' }}>
+        <select className="form-select" value={schoolId || ''} onChange={(e) => onSchoolChange(e.target.value)}>
+          {schools.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <h5>Пользователи школы</h5>
       <DataTable>
         <thead>

@@ -90,6 +90,7 @@ body {
   padding: 1.25rem 0.75rem 1rem;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 
 .school-select {
@@ -142,6 +143,17 @@ body {
 
 .menu li.active {
   background: var(--primary);
+}
+
+.menu-header {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #b0b6c2;
+  padding: 0.65rem 0.9rem 0.25rem;
+}
+
+.sub-item {
+  padding-left: 1.8rem;
 }
 
 .version {

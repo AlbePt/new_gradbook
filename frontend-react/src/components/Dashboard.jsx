@@ -2,10 +2,11 @@
  * Dashboard – statistics view with filters and KPI cards.
  */
 import React, { useEffect, useMemo, useState } from 'react';
+import PagePlaceholder from './PagePlaceholder';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-function Dashboard({ token, schoolId }) {
+function Dashboard({ token, schoolId, role }) {
   const [stats, setStats] = useState({ avg: '–', excellent: '–', failing: '–' });
   const [academicYears, setAcademicYears] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -73,54 +74,10 @@ function Dashboard({ token, schoolId }) {
 
   return (
     <div id="contentPane">
-      <ul className="nav nav-tabs mb-4" id="roleTabs" role="tablist">
-        <li className="nav-item" role="presentation">
-          <button
-            className="nav-link active"
-            id="cr-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#crPane"
-            role="tab"
-          >
-            Классные руководители
-          </button>
-        </li>
-        <li className="nav-item" role="presentation">
-          <button
-            className="nav-link"
-            id="teachers-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#teachersPane"
-            role="tab"
-          >
-            Педагоги
-          </button>
-        </li>
-        <li className="nav-item" role="presentation">
-          <button
-            className="nav-link"
-            id="admin-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#adminPane"
-            role="tab"
-          >
-            Администрация
-          </button>
-        </li>
-        <li className="nav-item" role="presentation">
-          <button
-            className="nav-link"
-            id="ahc-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#ahcPane"
-            role="tab"
-          >
-            АХЧ
-          </button>
-        </li>
-      </ul>
-      <div className="tab-content">
-        <div className="tab-pane fade show active" id="crPane" role="tabpanel">
+      {role !== 'cr' ? (
+        <PagePlaceholder page={role} />
+      ) : (
+        <>
           <div className="row g-3 mb-3">
             <div className="col-auto">
               <select
@@ -181,8 +138,8 @@ function Dashboard({ token, schoolId }) {
               <p className="value" id="absencePercent">–</p>
             </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }
