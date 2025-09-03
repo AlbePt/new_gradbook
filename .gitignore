@@ -1,7 +1,5 @@
-plan_detailed.docx
 docker-compose.yml
 Dockerfile
-tests/
 
 # ====================================
 # ОС и IDE
@@ -94,7 +92,5 @@ junitxml.xml
 *.swp
 *.swo
 *.tmp
-/frontend/node_modules
-/frontend/dist
 псевдографика.txt
 schema.sql
