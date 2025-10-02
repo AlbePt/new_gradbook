@@ -9,6 +9,7 @@ import pandas as pd
 from models.grade import GradeKindEnum, TermTypeEnum
 
 from .base import BaseParser, ParsedRow
+from .constants import STATUS_CHAR_MAP, split_cell
 
 
 class MarkSheetParser(BaseParser):
@@ -176,25 +177,64 @@ class MarkSheetParser(BaseParser):
                     val = row[col]
                     if pd.isna(val):
                         continue
-                    try:
-                        num = float(str(val).replace(",", "."))
-                    except ValueError:
+
+                    parts = split_cell(val)
+                    if not parts:
                         continue
-                    yield ParsedRow(
-                        student_name=student_name,
-                        class_name=class_name,
-                        academic_year_name=academic_year,
-                        subject_name=str(subject).strip(),
-                        teacher_name="",
-                        lesson_date=date.today(),
-                        grade_value=num,
-                        grade_kind=gk.value,
-                        term_type=tt.value,
-                        term_index=ti,
-                        lesson_index=None,
-                        attendance_status=None,
-                        minutes_late=None,
-                        comment=None,
-                    )
+
+                    statuses: list[str] = []
+                    grades: list[float] = []
+                    for part in parts:
+                        if part in STATUS_CHAR_MAP:
+                            statuses.append(part)
+                            continue
+                        try:
+                            grades.append(float(part.replace(",", ".")))
+                        except ValueError:
+                            continue
+
+                    if not statuses and not grades:
+                        continue
+
+                    column_offset = max(col - subject_col, 1)
+                    index_base = column_offset * 100
+                    event_index = index_base + 1
+
+                    for status in statuses:
+                        yield ParsedRow(
+                            student_name=student_name,
+                            class_name=class_name,
+                            academic_year_name=academic_year,
+                            subject_name=str(subject).strip(),
+                            teacher_name="",
+                            lesson_date=date.today(),
+                            grade_value=None,
+                            grade_kind=None,
+                            term_type=None,
+                            term_index=None,
+                            lesson_index=event_index,
+                            attendance_status=STATUS_CHAR_MAP[status],
+                            minutes_late=None,
+                            comment=None,
+                        )
+
+                    for idx, num in enumerate(grades):
+                        lesson_index = event_index + idx
+                        yield ParsedRow(
+                            student_name=student_name,
+                            class_name=class_name,
+                            academic_year_name=academic_year,
+                            subject_name=str(subject).strip(),
+                            teacher_name="",
+                            lesson_date=date.today(),
+                            grade_value=num,
+                            grade_kind=gk.value if isinstance(gk, GradeKindEnum) else gk,
+                            term_type=tt.value if isinstance(tt, TermTypeEnum) else tt,
+                            term_index=ti,
+                            lesson_index=lesson_index,
+                            attendance_status=None,
+                            minutes_late=None,
+                            comment=None,
+                        )
                 row_idx += 1
             start = row_idx
